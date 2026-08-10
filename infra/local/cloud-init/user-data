@@ -1,0 +1,25 @@
+#cloud-config
+
+ssh_pwauth: false
+disable_root: true
+manage_etc_hosts: true
+
+users:
+  - name: ansible
+    gecos: Ansible User
+    groups:
+      - sudo
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_authorized_keys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAnCh/MPE8cltisSpsV3bYFOTkBazvWWh3jxOdcsqbbD kubaxius@Deimos"
+
+package_update: true
+
+packages:
+  - python3
+  - qemu-guest-agent
+
+runcmd:
+  - systemctl enable --now qemu-guest-agent
