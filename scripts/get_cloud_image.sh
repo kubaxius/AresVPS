@@ -7,9 +7,9 @@ source "$SCRIPT_DIR/config.sh"
 
 cd "$PROJECT_DIR" || exit
 
-mkdir -p "$VM_DIR"/images
+mkdir -p "${VM_DIR}/images"
 
-cd "$VM_DIR"/images || exit
+cd "${VM_DIR}/images" || exit
 
 curl --fail --location --remote-name \
 "https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-amd64.img"
