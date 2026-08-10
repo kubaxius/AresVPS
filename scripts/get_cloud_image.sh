@@ -4,9 +4,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 
 source "$SCRIPT_DIR/config.sh"
 
-
-cd "$PROJECT_DIR" || exit
-
 mkdir -p "${VM_DIR}/images"
 
 cd "${VM_DIR}/images" || exit
