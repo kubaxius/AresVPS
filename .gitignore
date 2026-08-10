@@ -1,0 +1,54 @@
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+
+# OpenTofu and Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.auto.tfvars
+!*.tfvars.example
+.terraformrc
+terraform.rc
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ansible secrets and generated inventories
+.vault-password
+*.vault-password
+ansible/inventory/generated/
+ansible/inventory/**/*.generated.yml
+ansible/inventory/**/*.generated.yaml
+*.retry
+
+# Private keys and certificates
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# Local virtual machines and cloud-init artifacts
+*.qcow2
+*.img
+*.iso
+*.seed
+
+# Local caches and logs
+.cache/
+*.log
+
+# Virtual Machine
+vm/
