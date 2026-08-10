@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/.." >/dev/null && pwd)"
 
-VM_DIR_NAME="vm"
+source "$SCRIPT_DIR/config.sh"
 
 
 cd "$PROJECT_DIR" || exit
