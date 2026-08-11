@@ -1,4 +1,4 @@
-# BearWorks VPS
+# Ares VPS
 
 ## Goals
 
