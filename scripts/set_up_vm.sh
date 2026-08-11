@@ -46,17 +46,43 @@ fi
 
 # VM NETWORK SETUP #
 
-virsh --connect qemu:///system net-info default >/dev/null || {
-  echo "The libvirt 'default' network does not exist." >&2
+virsh --connect qemu:///system net-info "$VM_NETWORK" >/dev/null || {
+  echo "The libvirt '${VM_NETWORK}' network does not exist." >&2
   exit 1
 }
 
-if [[ "$(virsh --connect qemu:///system net-info default |
+if [[ "$(virsh --connect qemu:///system net-info "$VM_NETWORK" |
   awk '$1 == "Active:" { print $2 }')" != "yes" ]]; then
-  virsh --connect qemu:///system net-start default
+  virsh --connect qemu:///system net-start "$VM_NETWORK"
 fi
 
-virsh --connect qemu:///system net-autostart default
+virsh --connect qemu:///system net-autostart "$VM_NETWORK"
+
+# IP AND MAC SETUP #
+
+# Keep the VM's address stable across rebuilds by reserving it for a fixed MAC.
+# Check if MAC or IP are already reserved.
+NETWORK_XML="$(virsh --connect qemu:///system net-dumpxml "$VM_NETWORK")"
+MAC_RESERVATION="$(grep -F "mac='${VM_MAC}'" <<<"$NETWORK_XML" || true)"
+IP_RESERVATION="$(grep -F "ip='${VM_IP}'" <<<"$NETWORK_XML" || true)"
+
+if [[ -n "$MAC_RESERVATION" && "$MAC_RESERVATION" != *"ip='${VM_IP}'"* ]]; then
+  echo "MAC address ${VM_MAC} already has a different DHCP reservation:" >&2
+  echo "$MAC_RESERVATION" >&2
+  exit 1
+fi
+
+if [[ -n "$IP_RESERVATION" && "$IP_RESERVATION" != *"mac='${VM_MAC}'"* ]]; then
+  echo "IP address ${VM_IP} is already reserved for a different MAC address:" >&2
+  echo "$IP_RESERVATION" >&2
+  exit 1
+fi
+
+if [[ -z "$MAC_RESERVATION" ]]; then
+  virsh --connect qemu:///system net-update "$VM_NETWORK" add-last ip-dhcp-host \
+    "<host mac='${VM_MAC}' name='${VM_NAME}' ip='${VM_IP}'/>" \
+    --live --config
+fi
 
 
 cd "$VM_DIR" || exit
@@ -78,7 +104,7 @@ virt-install \
   --osinfo ubuntu24.04 \
   --import \
   --disk path="$VM_DISK",format=qcow2,bus=virtio \
-  --network network=default,model=virtio \
+  --network network="$VM_NETWORK",model=virtio,mac="$VM_MAC" \
   --graphics spice \
   --cloud-init "user-data=${USER_DATA},meta-data=${META_DATA}" \
   --noautoconsole
