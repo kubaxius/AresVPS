@@ -13,6 +13,16 @@ users:
     shell: /bin/bash
     lock_passwd: true
     ssh_authorized_keys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINeTrf/WlxsACkBn1ZU4eI4gt/h0siLzG8c/UlMgo3a2 ansible-kubaxius@Deimos"
+
+  - name: jbear
+    gecos: Jakub Niedzwiedz
+    groups:
+      - sudo
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_authorized_keys:
       - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAnCh/MPE8cltisSpsV3bYFOTkBazvWWh3jxOdcsqbbD kubaxius@Deimos"
 
 package_update: true
