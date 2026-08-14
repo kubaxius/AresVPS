@@ -1,8 +1,8 @@
 ---
-- name: Main Ubuntu Play
+- name: Main Play
   hosts: all
   become: true
-  tasks:
+  pre_tasks:
     - name: Install Apt Updates
       ansible.builtin.apt:
         upgrade: true
@@ -13,7 +13,7 @@
       ansible.builtin.debug:
         msg: "This is {{ ansible_facts['distribution'] }}!"
 
-- name: Set Up Ubuntu Web Server
+- name: Set Up Web Server
   hosts: web_servers
   become: true
   tasks:
