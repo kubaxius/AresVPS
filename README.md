@@ -1,14 +1,15 @@
-# Ares VPS
+# Pantheon Systems (formerly Ares VPS)
 
 ## Goals
 
-There are two goals of this repo:
+Pantheon is a learning-focused infrastructure project for building a reproducible, expandable network of VPS servers and NAS devices. Given one or more machines, the project aims to configure the complete environment through a bootstrap script.
 
-1. Learn about system management, stack used in deployment and management of server infrastructure.
-2. Create somewhat-proffessional looking VPS setup that I can use to host my website, future blog and other infrastructure.
+### Current Focus
+
+Learning server automation and web hosting using VPS by hosting my website there, while keeping the project as expandable as possible.
 
 ### AI Usage
 
-AI Usage should be kept to minimal, mainly limiting it's use for documentation and learning aid. All the code should be written by hand, by me.
+AI usage should be kept to a minimum, limited primarily to documentation and learning support. All the code should be written by me, by hand.
 
 Markdown files created by the AI shall be marked with `tags: ai_generated` in metadata. Other possible files provided by the AI should integrate this tag in similar appropriate way.
