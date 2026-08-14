@@ -8,15 +8,11 @@
         msg: "This is {{ ansible_facts['distribution'] }}!"
       when: ansible_facts["distribution"] in ["Ubuntu", "Debian"]
 
-    - name: Update repository index
-      ansible.builtin.apt:
+    - name: Install apache and php packages
+      ansible.builtin.package:
+        name:
+          - "{{ apache_package }}"
+          - "{{ php_package }}"
         update_cache: true
+        state: present
       when: ansible_facts["distribution"] == "Ubuntu"
-    - name: Install apache2 package
-      ansible.builtin.apt:
-        name: apache2
-        state: present
-    - name: Add php support for apache2
-      ansible.builtin.apt:
-        name: libapache2-mod-php
-        state: present
