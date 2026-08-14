@@ -1,0 +1,27 @@
+---
+- name: Main Ubuntu Play
+  hosts: all
+  become: true
+  tasks:
+    - name: Install Apt Updates
+      ansible.builtin.apt:
+        upgrade: true
+        update_cache: true
+      when: ansible_facts["distribution"] == "Ubuntu"
+
+    - name: Print System Name
+      ansible.builtin.debug:
+        msg: "This is {{ ansible_facts['distribution'] }}!"
+
+- name: Set Up Ubuntu Web Server
+  hosts: web_servers
+  become: true
+  tasks:
+    - name: Install Apache and PHP Packages
+      ansible.builtin.package:
+        name:
+          - apache2
+          - libapache2-mod-php
+        update_cache: true
+        state: present
+      when: ansible_facts["distribution"] == "Ubuntu"
