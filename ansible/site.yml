@@ -18,10 +18,32 @@
   become: true
   tasks:
     - name: Install Apache and PHP Packages
-      ansible.builtin.package:
+      ansible.builtin.apt:
         name:
           - apache2
           - libapache2-mod-php
         update_cache: true
         state: present
+      when: ansible_facts["distribution"] == "Ubuntu"
+
+- name: Set Up DB Server
+  hosts: db_servers
+  become: true
+  tasks:
+    - name: Install MariaDB
+      ansible.builtin.apt:
+        name: mariadb-server
+        state: present
+        update_cache: true
+      when: ansible_facts["distribution"] == "Ubuntu"
+
+- name: Set Up File Server
+  hosts: file_servers
+  become: true
+  tasks:
+    - name: Install Samba
+      ansible.builtin.apt:
+        package: samba
+        state: present
+        update_cache: true
       when: ansible_facts["distribution"] == "Ubuntu"
