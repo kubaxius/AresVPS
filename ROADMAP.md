@@ -51,7 +51,7 @@ VM-first roadmap for deploying the BearWorks Astro website. Complete each phase 
   - confirm examples contain no credentials, private keys, or real infrastructure identifiers
 - [ ] Add local commands to configure and test the VM with Ansible
 - [ ] Add formatting and validation commands for Ansible and OpenTofu
-- [ ] Add YAML linting, `ansible-lint`, and Ansible syntax checks
+- [x] Add YAML linting, `ansible-lint`, and Ansible syntax checks
 - [ ] Rebuild the VM from scratch and confirm Ansible can connect
 - [ ] Run the complete playbook twice and confirm the second run is idempotent
 - [ ] Confirm key-based SSH succeeds and password-based and root SSH fail
