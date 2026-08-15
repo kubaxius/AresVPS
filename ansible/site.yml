@@ -14,6 +14,21 @@
       ansible.builtin.debug:
         msg: "This is {{ ansible_facts['distribution'] }}!"
 
+- name: Set Up Simone
+  hosts: all
+  become: true
+  tags: simone_setup
+  tasks:
+    - name: Create simone User
+      ansible.builtin.user:
+        name: simone
+        groups: root
+
+    - name: Add SSH for simone
+      ansible.posix.authorized_key:
+        user: simone
+        key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINeTrf/WlxsACkBn1ZU4eI4gt/h0siLzG8c/UlMgo3a2 ansible-kubaxius@Deimos"
+
 - name: Set Up Web Server
   hosts: web_servers
   become: true
