@@ -1,7 +1,8 @@
 ---
-- name: Main Play
+- name: Setup Play
   hosts: all
   become: true
+  tags: always
   pre_tasks:
     - name: Install Apt Updates
       ansible.builtin.apt:
@@ -18,6 +19,7 @@
   become: true
   tasks:
     - name: Install Apache and PHP Packages
+      tags: apache, web
       ansible.builtin.apt:
         name:
           - apache2
@@ -31,6 +33,7 @@
   become: true
   tasks:
     - name: Install MariaDB
+      tags: mariadb, web
       ansible.builtin.apt:
         name: mariadb-server
         state: present
@@ -39,9 +42,11 @@
 
 - name: Set Up File Server
   hosts: file_servers
+  tags: files
   become: true
   tasks:
     - name: Install Samba
+      tags: samba
       ansible.builtin.apt:
         package: samba
         state: present
