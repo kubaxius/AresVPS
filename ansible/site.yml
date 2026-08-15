@@ -29,6 +29,29 @@
         user: simone
         key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINeTrf/WlxsACkBn1ZU4eI4gt/h0siLzG8c/UlMgo3a2 ansible-kubaxius@Deimos"
 
+    - name: Add sudoers for simone
+      ansible.builtin.copy:
+        src: sudoer_simone
+        dest: /etc/sudoers.d/simone
+        owner: root
+        group: root
+        mode: "0440"
+
+- name: Remove Simone
+  hosts: all
+  become: true
+  tags: simone_removal
+  tasks:
+    - name: Remove simone from sudoers
+      community.general.file_remove:
+        path: /etc/sudoers.d
+        pattern: simone
+
+    - name: Get rid of simone
+      ansible.builtin.user:
+        name: simone
+        state: absent
+
 - name: Set Up Web Server
   hosts: web_servers
   become: true
