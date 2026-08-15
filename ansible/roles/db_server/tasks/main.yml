@@ -1,0 +1,8 @@
+---
+- name: Install MariaDB
+  tags: mariadb, web
+  ansible.builtin.apt:
+    name: mariadb-server
+    state: present
+    update_cache: true
+  when: ansible_facts["distribution"] == "Ubuntu"

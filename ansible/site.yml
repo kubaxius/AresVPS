@@ -1,55 +1,13 @@
----
-- name: Setup Play
+- name: Update Servers
   hosts: all
   become: true
-  tags: always
-  pre_tasks:
-    - name: Install Apt Updates
-      ansible.builtin.apt:
-        upgrade: true
-        update_cache: true
-      changed_when: false
-      when: ansible_facts["distribution"] == "Ubuntu"
+  roles:
+    - updated
 
-    - name: Print System Name
-      ansible.builtin.debug:
-        msg: "This is {{ ansible_facts['distribution'] }}!"
-
-- name: Set Up Web Server
-  hosts: web_servers
+- name: Set Up VPS
+  hosts: vps
   become: true
-  tasks:
-    - name: Install Apache and PHP Packages
-      tags: apache, web
-      ansible.builtin.apt:
-        name:
-          - apache2
-          - libapache2-mod-php
-        update_cache: true
-        state: present
-      when: ansible_facts["distribution"] == "Ubuntu"
-
-- name: Set Up DB Server
-  hosts: db_servers
-  become: true
-  tasks:
-    - name: Install MariaDB
-      tags: mariadb, web
-      ansible.builtin.apt:
-        name: mariadb-server
-        state: present
-        update_cache: true
-      when: ansible_facts["distribution"] == "Ubuntu"
-
-- name: Set Up File Server
-  hosts: file_servers
-  tags: files
-  become: true
-  tasks:
-    - name: Install Samba
-      tags: samba
-      ansible.builtin.apt:
-        package: samba
-        state: present
-        update_cache: true
-      when: ansible_facts["distribution"] == "Ubuntu"
+  roles:
+    - web_server
+    - file_server
+    - db_server

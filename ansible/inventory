@@ -1,8 +1,2 @@
-[web_servers]
-192.168.122.10
-
-[db_servers]
-192.168.122.10
-
-[file_servers]
+[vps]
 192.168.122.10

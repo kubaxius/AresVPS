@@ -1,0 +1,8 @@
+---
+- name: Install Samba
+  tags: samba
+  ansible.builtin.apt:
+    package: samba
+    state: present
+    update_cache: true
+  when: ansible_facts["distribution"] == "Ubuntu"
