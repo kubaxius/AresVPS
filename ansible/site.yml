@@ -8,6 +8,7 @@
       ansible.builtin.apt:
         upgrade: true
         update_cache: true
+      changed_when: false
       when: ansible_facts["distribution"] == "Ubuntu"
 
     - name: Print System Name
