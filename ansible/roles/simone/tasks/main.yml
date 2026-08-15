@@ -1,0 +1,10 @@
+---
+- name: Validate requested state
+  ansible.builtin.assert:
+    that:
+      - simone_state is defined
+      - simone_state in ["present", "absent"]
+    fail_msg: "Pass -e simone_state=present or -e simone_state=absent"
+
+- name: Manage Simone
+  ansible.builtin.include_tasks: "{{ simone_state }}.yml"
