@@ -1,3 +1,4 @@
+---
 - name: Update Servers
   hosts: all
   become: true
@@ -5,7 +6,7 @@
     - updated
 
 - name: Set Up VPS
-  hosts: vps
+  hosts: servers
   become: true
   roles:
     - nginx

@@ -1,0 +1,5 @@
+---
+servers:
+  hosts:
+    local-server:
+      ansible_host: 192.168.122.10

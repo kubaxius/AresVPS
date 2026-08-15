@@ -1,0 +1,5 @@
+---
+servers:
+  hosts:
+    vps:
+      ansible_host: example.server.net
