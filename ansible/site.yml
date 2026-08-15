@@ -8,6 +8,4 @@
   hosts: vps
   become: true
   roles:
-    - web_server
-    - file_server
-    - db_server
+    - nginx
