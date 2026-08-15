@@ -1,6 +1,0 @@
----
-- name: Manage test user
-  hosts: all
-  become: true
-  roles:
-    - simone
