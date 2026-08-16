@@ -13,3 +13,7 @@ Learning server automation and web hosting using VPS by hosting my website there
 AI usage should be kept to a minimum, limited primarily to documentation and learning support. All the code should be written by me, by hand.
 
 Markdown files created by the AI shall be marked with `tags: ai_generated` in metadata. Other possible files provided by the AI should integrate this tag in similar appropriate way.
+
+## Assumptions
+
+- All servers are running some version of preconfigured Ubuntu Server Cloud Image.
