@@ -1,3 +1,5 @@
+---
+# ansible/roles/base/tasks/generate_locales.yml
 - name: Generate Locales on Debian-likes
   when: ansible_facts["os_family"] == "Debian"
   block:

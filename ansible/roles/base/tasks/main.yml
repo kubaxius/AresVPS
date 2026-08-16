@@ -1,4 +1,5 @@
 ---
+# ansible/roles/base/tasks/main.yml
 - name: Generate locales
   ansible.builtin.import_tasks: generate_locales.yml
 

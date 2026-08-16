@@ -1,4 +1,5 @@
 ---
+# ansible/inventories/local/hosts.yaml
 servers:
   hosts:
     local-server:

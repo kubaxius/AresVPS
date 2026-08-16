@@ -1,4 +1,5 @@
 ---
+# ansible/site.yml
 - name: Setup Servers
   hosts: servers
   become: true

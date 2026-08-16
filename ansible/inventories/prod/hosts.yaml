@@ -1,4 +1,5 @@
 ---
+# ansible/inventories/prod/hosts.yaml
 servers:
   hosts:
     vps:

@@ -1,4 +1,5 @@
 ---
+# ansible/roles/base/handlers/main.yml
 - name: Base | Regenerate locales
   ansible.builtin.command: locale-gen
   changed_when: true

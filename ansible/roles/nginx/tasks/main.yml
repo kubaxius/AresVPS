@@ -1,3 +1,5 @@
+---
+# ansible/roles/nginx/tasks/main.yml
 - name: Install Nginx
   ansible.builtin.apt:
     package: nginx
