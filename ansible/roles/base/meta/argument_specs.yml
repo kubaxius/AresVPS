@@ -1,0 +1,63 @@
+---
+# ansible/roles/base/meta/argument_specs.yml
+argument_specs:
+  main:
+    short_description: Establish the baseline configuration for a managed server
+    description:
+      - Prepares a fresh Debian-based server for higher-level service roles.
+      - Configures the hostname, timezone, time synchronization, UTF-8 locale,
+        automatic security updates, systemd timers, and journald retention.
+      - Installs only packages required on every managed server; application
+        packages are managed by their respective roles.
+    options:
+      server_hostname:
+        description: Hostname assigned to the server
+        type: str
+        required: true
+
+      server_timezone:
+        description: IANA timezone configured on the server
+        type: str
+        required: true
+
+      base_packages:
+        description: Packages installed on the server
+        type: list
+        elements: str
+        default:
+          - ca-certificates
+          - logrotate
+          - unattended-upgrades
+
+      base_automatic_security_updates:
+        description: Whether automatic security updates are enabled
+        type: bool
+        default: true
+
+      base_journald_limits:
+        description: Persistent journal storage limits
+        type: dict
+        options:
+          storage:
+            description: Journal storage mode
+            type: str
+            choices:
+              - persistent
+              - volatile
+              - auto
+            required: true
+
+          system_max_use:
+            description: Maximum disk space used by the journal
+            type: str
+            required: true
+
+          system_keep_free:
+            description: Minimum disk space the journal must leave free
+            type: str
+            required: true
+
+          max_retention:
+            description: Maximum time journal entries are retained
+            type: str
+            required: true
