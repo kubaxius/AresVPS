@@ -1,7 +1,5 @@
 ---
 # ansible/roles/base/tasks/main.yml
-- name: Configure UTF-8
-  ansible.builtin.import_tasks: utf8.yml
 
 - name: Set timezone
   community.general.timezone:
@@ -16,6 +14,9 @@
 - name: Set hostname
   ansible.builtin.hostname:
     name: "{{ server_hostname }}"
+
+- name: Configure UTF-8
+  ansible.builtin.import_tasks: utf8.yml
 
 - name: Perform package tasks
   ansible.builtin.import_tasks: packages.yml
