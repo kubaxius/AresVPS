@@ -4,7 +4,6 @@
   ansible.builtin.apt:
     package: nginx
     update_cache: true
-  changed_when: false
   when: ansible_facts["distribution"] == "Ubuntu"
 
 - name: Enable and run Nginx
