@@ -38,11 +38,12 @@ VM-first roadmap for deploying the BearWorks Astro website. Complete each phase 
   - install required system packages
   - configure unattended security upgrades
   - configure journald limits and log rotation
-- [ ] Complete the access role:
-  - create the administrative user and sudo configuration
-  - configure key-only SSH authentication
+- [ ] Complete the steady-state access role:
+  - manage administrative users, authorized keys, and sudo policy
+  - enforce key-only SSH authentication
   - disable SSH password authentication
   - disable direct root SSH login
+  - validate SSH configuration before reloading
 - [ ] Complete the firewall role while keeping local and production rules configurable
 - [ ] Add Ansible Vault configuration and encrypted environment variables
 - [ ] Add safe example configuration files:
