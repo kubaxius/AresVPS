@@ -1,0 +1,9 @@
+---
+# ansible/roles/base/tasks/units.yml
+
+- name: Enable unit files
+  ansible.builtin.systemd_service:
+    state: started
+    enabled: true
+    name: "{{ item }}"
+  loop: "{{ base_units }}"

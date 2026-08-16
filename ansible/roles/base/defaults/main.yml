@@ -6,3 +6,14 @@ base_journald_limits:
   system_max_use: 500M
   system_keep_free: 2G
   max_retention: 30day
+
+base_packages:
+  - ca-certificates
+  - logrotate
+  - unattended-upgrades
+
+base_units:
+  - logrotate.timer
+
+base_automatic_security_updates: true
+base_automatic_reboot: false

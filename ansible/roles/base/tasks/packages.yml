@@ -1,0 +1,10 @@
+---
+# ansible/roles/base/tasks/packages.yml
+- name: Update cache
+  ansible.builtin.apt:
+    update-cache: true
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+  loop: "{{ base_packages }}"

@@ -17,21 +17,11 @@
   ansible.builtin.hostname:
     name: "{{ server_hostname }}"
 
-- name: Install apt updates
-  ansible.builtin.apt:
-    upgrade: true
-    update_cache: true
+- name: Perform package tasks
+  ansible.builtin.import_tasks: packages.yml
 
-- name: Install logrotate
-  ansible.builtin.apt:
-    name: logrotate
-    state: present
-
-- name: Enable and start logrotate timer
-  ansible.builtin.systemd_service:
-    name: logrotate.timer
-    state: started
-    enabled: true
+- name: Perform unit file tasks
+  ansible.builtin.import_tasks: units.yml
 
 - name: Configure journald
   ansible.builtin.import_tasks: journald.yml
