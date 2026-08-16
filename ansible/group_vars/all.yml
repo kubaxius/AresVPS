@@ -2,4 +2,3 @@
 # ansible/group_vars/all.yml
 ansible_user: ansible
 server_timezone: Etc/UTC
-server_locale: C.UTF-8

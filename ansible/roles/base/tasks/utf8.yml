@@ -1,0 +1,18 @@
+---
+# ansible/roles/base/tasks/utf8.yml
+- name: Configure UTF-8 system locale
+  ansible.builtin.copy:
+    dest: /etc/default/locale
+    content: |
+      LANG=C.UTF-8
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Check locale encoding
+  ansible.builtin.command: locale charmap
+  environment:
+    LANG: C.UTF-8
+  register: base_locale_charmap
+  changed_when: false
+  failed_when: base_locale_charmap.stdout != "UTF-8"

@@ -1,7 +1,7 @@
 ---
 # ansible/roles/base/tasks/main.yml
-- name: Generate locales
-  ansible.builtin.import_tasks: generate_locales.yml
+- name: Configure UTF-8
+  ansible.builtin.import_tasks: utf8.yml
 
 - name: Set timezone
   community.general.timezone:
