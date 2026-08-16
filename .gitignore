@@ -51,4 +51,4 @@ id_ed25519.*
 *.log
 
 # Virtual Machine
-vm/
+/vm/
