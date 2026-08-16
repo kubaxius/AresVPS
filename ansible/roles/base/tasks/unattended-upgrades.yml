@@ -11,7 +11,10 @@
 - name: Configure apt unattended-upgrades
   ansible.builtin.template:
     src: "apt.conf.d/{{ item | basename }}"
-    dest: "/etc/apt/apt.conf.d/{{ item | basename | regex_replace('\\.j2$', '') }}"
+    dest: >-
+      /etc/apt/apt.conf.d/{{
+        item | basename | regex_replace('[.]j2$', '')
+      }}
     owner: root
     group: root
     mode: "0644"
