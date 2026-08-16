@@ -13,6 +13,10 @@
     state: started
     enabled: true
 
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ server_hostname }}"
+
 - name: Install apt updates
   ansible.builtin.apt:
     upgrade: true
