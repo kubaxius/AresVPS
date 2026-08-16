@@ -32,3 +32,6 @@
     name: logrotate.timer
     state: started
     enabled: true
+
+- name: Configure journald
+  ansible.builtin.import_tasks: journald.yml

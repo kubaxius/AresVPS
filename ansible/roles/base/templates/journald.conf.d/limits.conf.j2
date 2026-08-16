@@ -1,0 +1,8 @@
+# roles/base/templates/journald.conf.d/limits.conf.j2
+# Managed by Ansible
+
+[Journal]
+Storage={{ base_journald_limits.storage }}
+SystemMaxUse={{ base_journald_limits.system_max_use }}
+SystemKeepFree={{ base_journald_limits.system_keep_free }}
+MaxRetentionSec={{ base_journald_limits.max_retention }}

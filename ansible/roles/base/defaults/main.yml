@@ -1,0 +1,8 @@
+---
+# roles/base/defaults/main.yml
+
+base_journald_limits:
+  storage: persistent
+  system_max_use: 500M
+  system_keep_free: 2G
+  max_retention: 30day

@@ -1,0 +1,18 @@
+---
+# roles/base/tasks/journald.yml
+- name: Create journald drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configure journald storage limits
+  ansible.builtin.template:
+    src: journald.conf.d/limits.conf.j2
+    dest: /etc/systemd/journald.conf.d/90-ansible-limits.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Base | Restart journald
