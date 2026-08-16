@@ -13,6 +13,8 @@ base_packages:
   - unattended-upgrades
 
 base_units:
+  - apt-daily.timer
+  - apt-daily-upgrade.timer
   - logrotate.timer
 
 base_automatic_security_updates: true
