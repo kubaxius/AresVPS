@@ -20,6 +20,9 @@
 - name: Perform package tasks
   ansible.builtin.import_tasks: packages.yml
 
+- name: Configure unattended-upgrades
+  ansible.builtin.import_tasks: unattended-upgrades.yml
+
 - name: Perform unit file tasks
   ansible.builtin.import_tasks: units.yml
 

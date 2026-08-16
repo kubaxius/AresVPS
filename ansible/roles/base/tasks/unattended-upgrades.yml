@@ -1,0 +1,24 @@
+---
+# ansible/roles/base/tasks/unattended-upgrades.yml
+- name: Create apt drop-in directory
+  ansible.builtin.file:
+    path: /etc/apt/apt.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configure apt unattended-upgrades
+  ansible.builtin.template:
+    src: "apt.conf.d/{{ item | basename }}"
+    dest: "/etc/apt/apt.conf.d/{{ item | basename | regex_replace('\\.j2$', '') }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: >-
+    {{ query(
+      'ansible.builtin.fileglob',
+      role_path ~ '/templates/apt.conf.d/*'
+    ) }}
+  loop_control:
+    label: "{{ item | basename }}"

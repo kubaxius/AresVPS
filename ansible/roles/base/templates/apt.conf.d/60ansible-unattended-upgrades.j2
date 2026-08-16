@@ -1,0 +1,4 @@
+# roles/base/templates/apt.conf.d/60ansible-unattended-upgrades.j2
+# Managed by Ansible
+
+Unattended-Upgrade::Automatic-Reboot "{{ base_automatic_reboot | bool | ternary('true', 'false') }}";
