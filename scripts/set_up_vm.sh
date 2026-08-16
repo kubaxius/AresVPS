@@ -13,7 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 source "$SCRIPT_DIR/config.sh"
 
 # DEFINE VARIABLES #
-BASE_IMAGE="${VM_DIR}/images/ubuntu-24.04-server-cloudimg-amd64.img"
+BASE_IMAGE="${IMAGE_DIR}/ubuntu-24.04-server-cloudimg-amd64.img"
 VM_DISK="/var/lib/libvirt/images/${VM_NAME}.qcow2"
 USER_DATA="${PROJECT_DIR}/infra/local/cloud-init/user-data"
 META_DATA="${PROJECT_DIR}/infra/local/cloud-init/meta-data"
@@ -85,7 +85,7 @@ if [[ -z "$MAC_RESERVATION" ]]; then
 fi
 
 
-cd "$VM_DIR" || exit
+cd "$IMAGE_DIR" || exit
 
 # IMAGE #
 
