@@ -33,7 +33,7 @@ VM-first roadmap for deploying the BearWorks Astro website. Complete each phase 
   - Nginx
   - static-site hosting
   - optional Tailscale
-- [ ] Complete the base-system role:
+- [x] Complete the base-system role:
   - configure hostname, timezone, locale, and time synchronization
   - install required system packages
   - configure unattended security upgrades
