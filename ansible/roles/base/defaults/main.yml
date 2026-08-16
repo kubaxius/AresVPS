@@ -1,21 +1,22 @@
 ---
 # roles/base/defaults/main.yml
 
+base_packages:
+  - ca-certificates # Provides trusted certificate authorities for secure TLS connections.
+  - logrotate # Rotates, compresses, and removes system log files.
+  - unattended-upgrades # Automatically installs security and other configured package updates.
+
+base_units:
+  - apt-daily.timer # Refreshes package metadata and downloads available updates daily.
+  - apt-daily-upgrade.timer # Installs available package upgrades and performs cleanup daily.
+  - logrotate.timer # Rotates, compresses, and removes system logs on schedule.
+  - systemd-timesyncd.service # Synchronizes the system clock with network time servers.
+
 base_journald_limits:
   storage: persistent
   system_max_use: 500M
   system_keep_free: 2G
   max_retention: 30day
-
-base_packages:
-  - ca-certificates
-  - logrotate
-  - unattended-upgrades
-
-base_units:
-  - apt-daily.timer
-  - apt-daily-upgrade.timer
-  - logrotate.timer
 
 base_automatic_security_updates: true
 base_automatic_reboot: false
