@@ -1,0 +1,21 @@
+- name: Generate Locales on Debian-likes
+  when: ansible_facts["os_family"] == "Debian"
+  block:
+    - name: Configure /etc/locale.gen
+      ansible.builtin.lineinfile:
+        path: /etc/locale.gen
+        regexp: "^#?\\s*{{ server_locale | regex_escape }}\\s+UTF-8"
+        line: "{{ server_locale }} UTF-8"
+      notify: Base | Regenerate locales
+
+    - name: Apply locale changes now
+      ansible.builtin.meta: flush_handlers
+
+    - name: Get available locales
+      ansible.builtin.command: locale -a
+      register: base_available_locales
+      changed_when: false
+
+    - name: Display available locales
+      ansible.builtin.debug:
+        msg: "Available locales: {{ base_available_locales.stdout_lines }}"

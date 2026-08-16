@@ -1,0 +1,4 @@
+---
+- name: Base | Regenerate locales
+  ansible.builtin.command: locale-gen
+  changed_when: true
