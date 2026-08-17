@@ -7,7 +7,9 @@ authors = [
     { name = "Jakub Niedźwiedź", email = "jakub.niedzwiedz@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "typer>=0.27.1",
+]
 
 [project.scripts]
 pantheon-systems = "pantheon_systems:main"
