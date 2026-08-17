@@ -10,7 +10,6 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 source "$SCRIPT_DIR/config.sh"
 
-VM_NAME="vps-local"
 VM_DISK="/var/lib/libvirt/images/${VM_NAME}.qcow2"
 
 read -r -p "Destroy ${VM_NAME} and delete ${VM_DISK}? [y/N] " reply
@@ -20,15 +19,19 @@ if [[ $reply != "y" && $reply != "Y" ]]; then
 fi
 
 if virsh --connect qemu:///system dominfo "$VM_NAME" >/dev/null 2>&1; then
-  if [[ "$(virsh --connect qemu:///system domstate "$VM_NAME")" == "running" ]]; then
+  if virsh --connect qemu:///system list --name | grep -Fxq "$VM_NAME"; then
     echo "Stopping ${VM_NAME}..."
     virsh --connect qemu:///system destroy "$VM_NAME"
   fi
 
-  if virsh --connect qemu:///system dumpxml "$VM_NAME" | grep -q '<nvram'; then
-    virsh --connect qemu:///system undefine "$VM_NAME" --nvram
-  else
-    virsh --connect qemu:///system undefine "$VM_NAME"
+  # A transient domain disappears when it stops, so only persistent domains
+  # still exist at this point and need to be undefined.
+  if virsh --connect qemu:///system dominfo "$VM_NAME" >/dev/null 2>&1; then
+    if virsh --connect qemu:///system dumpxml "$VM_NAME" | grep -q '<nvram'; then
+      virsh --connect qemu:///system undefine "$VM_NAME" --nvram
+    else
+      virsh --connect qemu:///system undefine "$VM_NAME"
+    fi
   fi
 else
   echo "No libvirt domain named ${VM_NAME}; continuing with disk cleanup."
