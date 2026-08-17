@@ -1,5 +1,7 @@
 # Pantheon Systems (formerly Ares VPS)
 
+Free for noncommercial use under the PolyForm Noncommercial License 1.0.0. For commercial licensing, contact <jakub.niedzwiedz98@gmail.com>
+
 ## Goals
 
 Pantheon is a learning-focused infrastructure project for building a reproducible and expandable network of VPS servers and NAS devices. The goal is to configure the complete environment on one or more machines through a bootstrap script.
