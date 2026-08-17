@@ -1,5 +1,5 @@
 [project]
-name = "pantheon-systems"
+name = "pantheon-systems-cli"
 version = "0.1.0"
 description = "Easily rebuildable, scalable personal solution for creating and managing servers."
 readme = "README.md"
@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pantheon-systems = "pantheon_systems:main"
+pantheon = "pantheon_systems_cli:main"
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]
