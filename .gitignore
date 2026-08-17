@@ -50,5 +50,23 @@ id_ed25519.*
 .cache/
 *.log
 
-# Virtual Machine
+# Python and uv
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.python-version
+.uv-cache/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual Machine Images
 /vm/

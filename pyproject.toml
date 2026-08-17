@@ -1,0 +1,17 @@
+[project]
+name = "pantheon-systems"
+version = "0.1.0"
+description = "Easily rebuildable, scalable personal solution for creating and managing servers."
+readme = "README.md"
+authors = [
+    { name = "Jakub Niedźwiedź", email = "jakub.niedzwiedz@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+vps = "vps:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
