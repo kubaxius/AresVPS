@@ -8,15 +8,28 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
-# PULL GLOBAL CONFIG #
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
-source "$SCRIPT_DIR/config.sh"
+if [[ $# -ne 4 ]]; then
+  echo "Usage: $0 <vm-name> <network> <mac-address> <ip-address>" >&2
+  exit 2
+fi
 
 # DEFINE VARIABLES #
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." >/dev/null && pwd)"
+IMAGE_DIR="${PROJECT_DIR}/vm"
+
+VM_NAME="$1"
+VM_NETWORK="$2"
+VM_MAC="$3"
+VM_IP="$4"
 BASE_IMAGE="${IMAGE_DIR}/ubuntu-24.04-server-cloudimg-amd64.img"
 VM_DISK="/var/lib/libvirt/images/${VM_NAME}.qcow2"
 USER_DATA="${PROJECT_DIR}/infra/local/cloud-init/user-data"
-META_DATA="${PROJECT_DIR}/infra/local/cloud-init/meta-data"
+META_DATA="$(mktemp --tmpdir pantheon-cloud-init.XXXXXX)"
+trap 'rm -f -- "$META_DATA"' EXIT
+
+printf 'instance-id: %s-001\nlocal-hostname: %s\n' \
+  "$VM_NAME" "$VM_NAME" >"$META_DATA"
 
 # SANITY CHECKS #
 
@@ -27,8 +40,8 @@ META_DATA="${PROJECT_DIR}/infra/local/cloud-init/meta-data"
 }
 
 # If cloud-init files exist
-[[ -f "$USER_DATA" && -f "$META_DATA" ]] || {
-  echo "Cloud-init files are missing." >&2
+[[ -f "$USER_DATA" ]] || {
+  echo "Cloud-init user-data is missing: $USER_DATA" >&2
   exit 1
 }
 

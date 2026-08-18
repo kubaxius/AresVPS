@@ -4,193 +4,160 @@ tags: ai_generated
 
 # Project Structure
 
-The repository separates machine provisioning from server configuration:
+Pantheon uses Ansible inventory names as canonical machine names. The Python CLI
+reads the inventory, Bash handles privileged libvirt operations, cloud-init
+bootstraps SSH access, and Ansible applies the lasting system configuration.
 
-- **OpenTofu provisions machines:** either a local libvirt VM or the production Hetzner server.
-- **Ansible configures the resulting machine:** the same roles and main playbook are used in both environments.
-- Local-only artifacts, such as downloaded Ubuntu cloud images and VM disks, remain outside Git.
-
-## Proposed repository layout
+## Repository layout
 
 ```text
 VPS/
-├── README.md
-├── TODO.md
-├── Makefile
-├── .env.example
-├── .gitignore
-│
-├── infra/
-│   ├── local/
-│   │   ├── versions.tf
-│   │   ├── providers.tf
-│   │   ├── variables.tf
-│   │   ├── terraform.tfvars.example
-│   │   ├── main.tf
-│   │   ├── outputs.tf
-│   │   └── cloud-init.yaml.tftpl
-│   │
-│   └── production/
-│       ├── versions.tf
-│       ├── providers.tf
-│       ├── variables.tf
-│       ├── terraform.tfvars.example
-│       ├── server.tf
-│       ├── firewall.tf
-│       ├── dns.tf
-│       └── outputs.tf
-│
+├── ansible.cfg
 ├── ansible/
-│   ├── ansible.cfg
-│   ├── requirements.yml
-│   ├── site.yml
+│   ├── group_vars/all.yml
 │   ├── inventories/
-│   │   ├── local/
-│   │   │   ├── hosts.yml
-│   │   │   └── group_vars/
-│   │   │       └── all.yml
-│   │   └── production/
-│   │       ├── hosts.yml
-│   │       └── group_vars/
-│   │           ├── all.yml
-│   │           └── vault.yml
-│   └── roles/
-│       ├── base/
-│       ├── access/
-│       ├── firewall/
-│       ├── tailscale/
-│       ├── docker/
-│       └── nginx/
-│
+│   │   ├── local/hosts.yaml
+│   │   └── prod/
+│   │       ├── hosts.yaml
+│   │       └── host_vars/ares/vault.yml
+│   ├── roles/
+│   └── site.yml
+├── infra/local/cloud-init/user-data
+├── pantheon_systems_cli/
+│   ├── ansible.py
+│   └── vm/
 ├── scripts/
-│   └── download-cloud-image
-│
-├── images/                 # Ignored; downloaded cloud images
-│
-└── .github/
-    └── workflows/
-        └── validate.yml
+│   ├── destroy_vm.sh
+│   └── set_up_vm.sh
+└── vm/                         # Ignored cloud image storage
 ```
 
-The provisioning and configuration flow is:
+## Machine identity
 
-```text
-infra/local ────────┐
-                    ├── machine accessible by SSH ──→ ansible/site.yml
-infra/production ───┘
+The Ansible inventory alias is the machine's identity everywhere:
+
+| Environment | Inventory name | OS hostname | Libvirt name |
+|-------------|----------------|-------------|--------------|
+| Production  | `ares`         | `ares`      | Not applicable |
+| Local       | `ares-local`   | `ares-local`| `ares-local` |
+
+Future machines follow the same convention: `hera` in production and
+`hera-local` for its local test VM. `ansible_host`, when present, is only a
+connection address; it does not define machine identity.
+
+The base Ansible role assigns `inventory_hostname` as the OS hostname. Local VM
+commands pass the same inventory name to libvirt and generate matching
+cloud-init metadata at creation time.
+
+## Inventories
+
+Local machines and production machines remain in separate inventories so a
+local command cannot accidentally target production.
+
+```yaml
+# ansible/inventories/local/hosts.yaml
+all:
+  hosts:
+    ares-local:
+      env_type: local
+      configure_production_tls: false
+      vm_network: default
+      vm_mac: "52:54:00:00:00:10"
+      vm_ip: "192.168.122.10"
 ```
 
-## Local and production responsibilities
-
-`infra/local/` contains only what is needed to create the test environment:
-
-- download or reference the pinned cloud image;
-- create the libvirt disk and VM;
-- allocate CPU and memory;
-- configure NAT networking;
-- provide minimal cloud-init bootstrap configuration;
-- output the VM's SSH address.
-
-`infra/production/` contains only provider infrastructure:
-
-- Hetzner server;
-- Hetzner firewall;
-- SSH key registration;
-- public addresses;
-- Netlify DNS.
-
-Neither environment should contain the final server configuration. That belongs in the shared `ansible/roles/` directory. For example:
-
-```text
-infra/local/main.tf             ← creates an empty Ubuntu VM
-infra/production/server.tf      ← creates an empty Ubuntu VPS
-ansible/roles/docker/           ← installs Docker on either one
+```yaml
+# ansible/inventories/prod/hosts.yaml
+all:
+  hosts:
+    ares:
+      ansible_host: example.server.net
+      env_type: prod
+      configure_production_tls: false
 ```
 
-## Keep cloud-init small
+The playbook targets Ansible's built-in `all` group. Shared configuration,
+including `ansible_user: ansible`, lives in `ansible/group_vars/all.yml`.
+Machine-specific production secrets belong in that machine's encrypted
+`host_vars/<name>/vault.yml` file.
 
-Cloud-init should provide only what Ansible needs to connect:
+## Local SSH configuration
 
-- an administrative user;
-- an authorized SSH public key;
-- Python;
-- optionally, the hostname.
+Ansible connects to `ares-local` without an `ansible_host` override. OpenSSH
+resolves that name to the reserved VM address:
 
-After this initial bootstrap, Ansible owns the machine configuration. Configuring the entire server through cloud-init would duplicate Ansible's responsibilities and could cause the local and production environments to diverge.
+```sshconfig
+Host *-local
+    User jbear
+    IdentityFile ~/.ssh/pantheon_local_%r_ed25519
+    IdentitiesOnly yes
+    StrictHostKeyChecking accept-new
+    UserKnownHostsFile ~/.ssh/known_hosts.local-test
+    HostKeyAlias %n-vm
 
-## Store the cloud-image pin, not the image
-
-The download script and pinning information belong in Git:
-
-```text
-scripts/download-cloud-image
-infra/local/variables.tf
+Host ares-local
+    HostName 192.168.122.10
 ```
 
-The downloaded image does not:
+For an interactive `ssh ares-local` session, `%r` expands to `jbear`. Ansible
+sets the remote user to `ansible`, so the same entry resolves to
+`~/.ssh/pantheon_local_ansible_ed25519`.
 
-```text
-images/
-└── noble-server-cloudimg-amd64.img
-```
-
-The download script can define the approved source and checksum:
+Cloud-init installs the corresponding public keys from
+`infra/local/cloud-init/user-data`. When a VM is rebuilt and receives a new host
+key, remove the old test-only entry before reconnecting:
 
 ```bash
-IMAGE_URL="https://cloud-images.ubuntu.com/..."
-IMAGE_SHA256="the-approved-exact-checksum"
-IMAGE_PATH="images/ubuntu-24.04-amd64.qcow2"
+ssh-keygen -R ares-local-vm -f ~/.ssh/known_hosts.local-test
 ```
 
-It should download the image only when it is absent and reject any file whose checksum does not match. The URL and checksum are versioned in Git, while the large image remains ignored.
+## Local VM flow
 
-The blanket `vm/` ignore rule should be removed, and the `vm/` directory is probably unnecessary. Local VM definitions are source code and belong in `infra/local/`. Only generated disks, images, OpenTofu state, and generated cloud-init artifacts should be ignored.
+```text
+local Ansible inventory
+    │
+    ├── canonical name ──▶ Typer completion and libvirt domain name
+    ├── vm_network ────▶ libvirt network
+    ├── vm_mac ───────▶ DHCP reservation
+    └── vm_ip ────────▶ DHCP reservation and SSH HostName
+```
 
-## Use one playbook with environment-specific inventories
+The supported lifecycle commands are:
 
-Both inventories target the same logical group:
+```console
+pantheon vm create ares-local
+pantheon vm start ares-local
+pantheon vm destroy ares-local
+```
+
+Host arguments are validated against the local inventory and participate in
+shell completion. The privileged scripts receive resolved values as arguments;
+they contain no machine-specific names or addresses.
+
+Cloud-init is limited to bootstrap responsibilities: creating the `ansible` and
+`jbear` users, installing their authorized keys, installing Python and the QEMU
+guest agent, and starting the guest agent. Ansible owns the steady-state system
+configuration.
+
+## Adding another local machine
+
+Add the host and its unique network values to the local inventory:
 
 ```yaml
-# ansible/inventories/local/hosts.yml
-all:
-  children:
-    servers:
-      hosts:
-        local-vps:
-          ansible_host: 192.168.122.100
+hera-local:
+  env_type: local
+  configure_production_tls: false
+  vm_network: default
+  vm_mac: "52:54:00:00:00:11"
+  vm_ip: "192.168.122.11"
 ```
 
-```yaml
-# ansible/inventories/production/hosts.yml
-all:
-  children:
-    servers:
-      hosts:
-        production-vps:
-          ansible_host: example-public-address
+Then add its SSH address mapping:
+
+```sshconfig
+Host hera-local
+    HostName 192.168.122.11
 ```
 
-The main playbook remains environment-independent:
-
-```yaml
-- name: Configure VPS
-  hosts: servers
-  become: true
-  roles:
-    - base
-    - access
-    - firewall
-    - docker
-    - nginx
-    - role: tailscale
-      when: tailscale_enabled
-```
-
-The local inventory can disable production-only behavior:
-
-```yaml
-tailscale_enabled: false
-configure_production_tls: false
-```
-
-The production inventory can enable it. This creates one final server configuration that is exercised first against a replaceable local VM and then applied to the real VPS.
+No Python, Bash, cloud-init, or playbook change is required. The new name is
+automatically available to Pantheon's VM command completion.

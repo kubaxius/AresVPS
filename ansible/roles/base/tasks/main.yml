@@ -13,7 +13,7 @@
 
 - name: Set hostname
   ansible.builtin.hostname:
-    name: "{{ server_hostname }}"
+    name: "{{ inventory_hostname }}"
 
 - name: Configure UTF-8
   ansible.builtin.import_tasks: utf8.yml

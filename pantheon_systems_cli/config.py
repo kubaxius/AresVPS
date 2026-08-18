@@ -2,6 +2,7 @@ from pathlib import Path
 
 PROJECT_PATH: Path = Path(__file__).resolve().parent.parent
 SCRIPTS_PATH: Path = PROJECT_PATH / "scripts"
+ANSIBLE_INVENTORIES_PATH: Path = PROJECT_PATH / "ansible" / "inventories"
 
 
 IMAGE_URL: str = (

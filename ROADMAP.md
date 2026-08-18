@@ -23,7 +23,7 @@ VM-first roadmap for deploying the BearWorks Astro website. Complete each phase 
 ## Phase 1 — Stabilize the local Ansible foundation
 
 - [ ] Pin the Ubuntu cloud image and record its checksum
-- [x] Replace the single inventory with separate `local` and `production` inventories targeting the same `servers` group
+- [x] Replace the single inventory with separate `local` and `prod` inventories using canonical machine names
 - [x] Add shared variables and environment-specific variables
 - [ ] Keep production TLS, production DNS, and the production Tailscale identity disabled in the local inventory
 - [x] Refactor `site.yml` so roles run in this deterministic order:

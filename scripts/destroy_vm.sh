@@ -7,9 +7,12 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
-source "$SCRIPT_DIR/config.sh"
+if [[ $# -ne 1 ]]; then
+  echo "Usage: $0 <vm-name>" >&2
+  exit 2
+fi
 
+VM_NAME="$1"
 VM_DISK="/var/lib/libvirt/images/${VM_NAME}.qcow2"
 
 read -r -p "Destroy ${VM_NAME} and delete ${VM_DISK}? [y/N] " reply

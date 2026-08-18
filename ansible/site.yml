@@ -1,7 +1,7 @@
 ---
 # ansible/site.yml
 - name: Setup Servers
-  hosts: servers
+  hosts: all
   become: true
   roles:
     - base

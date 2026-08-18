@@ -1,6 +1,8 @@
 ---
 # ansible/inventories/prod/hosts.yaml
-servers:
+all:
   hosts:
-    vps:
+    ares:
       ansible_host: example.server.net
+      env_type: prod
+      configure_production_tls: false

@@ -1,5 +1,0 @@
----
-# ansible/inventories/prod/group_vars/servers/main.yml
-env_type: local
-configure_production_tls: false
-server_hostname: ares-vps

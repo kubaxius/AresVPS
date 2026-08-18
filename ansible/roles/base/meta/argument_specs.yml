@@ -10,11 +10,6 @@ argument_specs:
       - Installs only packages required on every managed server; application
         packages are managed by their respective roles.
     options:
-      server_hostname:
-        description: Hostname assigned to the server
-        type: str
-        required: true
-
       server_timezone:
         description: IANA timezone configured on the server
         type: str

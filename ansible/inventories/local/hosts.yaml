@@ -1,6 +1,10 @@
 ---
 # ansible/inventories/local/hosts.yaml
-servers:
+all:
   hosts:
-    local-server:
-      ansible_host: ares-local-ansible
+    ares-local:
+      env_type: local
+      configure_production_tls: false
+      vm_network: default
+      vm_mac: "52:54:00:00:00:10"
+      vm_ip: "192.168.122.10"

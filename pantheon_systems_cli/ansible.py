@@ -1,0 +1,80 @@
+import json
+import subprocess
+from typing import TypeAlias, cast
+
+from pantheon_systems_cli.config import ANSIBLE_INVENTORIES_PATH
+
+
+JsonValue: TypeAlias = (
+    None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
+)
+
+
+class InventoryError(RuntimeError):
+    """Raised when an Ansible inventory cannot be loaded."""
+
+
+def _load_inventory(inventory: str) -> dict[str, JsonValue]:
+    inventory_path = ANSIBLE_INVENTORIES_PATH / inventory
+
+    if not inventory_path.is_dir():
+        raise InventoryError(f"Ansible inventory does not exist: {inventory_path}")
+
+    try:
+        result = subprocess.run(
+            [
+                "ansible-inventory",
+                "--inventory",
+                str(inventory_path),
+                "--list",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        inventory_data = cast(JsonValue, json.loads(result.stdout))
+    except FileNotFoundError as error:
+        raise InventoryError("ansible-inventory is not installed") from error
+    except subprocess.CalledProcessError as error:
+        message = error.stderr.strip() or str(error)
+        raise InventoryError(f"Could not load Ansible inventory: {message}") from error
+    except json.JSONDecodeError as error:
+        raise InventoryError("ansible-inventory returned invalid JSON") from error
+
+    if not isinstance(inventory_data, dict):
+        raise InventoryError("ansible-inventory returned an unexpected data structure")
+
+    return inventory_data
+
+
+def _get_hostvars(inventory: str) -> dict[str, JsonValue]:
+    inventory_data = _load_inventory(inventory)
+    metadata = inventory_data.get("_meta")
+    if not isinstance(metadata, dict):
+        raise InventoryError("Ansible inventory does not contain host metadata")
+
+    hostvars = metadata.get("hostvars")
+    if not isinstance(hostvars, dict):
+        raise InventoryError("Ansible inventory does not contain host variables")
+
+    return hostvars
+
+
+def get_hosts_from_inventory(inventory: str = "local") -> list[str]:
+    """Return the canonical host names declared by an inventory."""
+
+    return sorted(_get_hostvars(inventory))
+
+
+def get_host_variables(host: str, inventory: str = "local") -> dict[str, JsonValue]:
+    """Return the resolved Ansible variables for one canonical host name."""
+
+    hostvars = _get_hostvars(inventory)
+    variables = hostvars.get(host)
+
+    if variables is None:
+        raise InventoryError(f"Host {host!r} is not in the {inventory!r} inventory")
+    if not isinstance(variables, dict):
+        raise InventoryError(f"Ansible returned invalid variables for host {host!r}")
+
+    return variables

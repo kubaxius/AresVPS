@@ -1,7 +1,0 @@
----
-# ansible/inventories/local/group_vars/servers.yml
-ansible_ssh_private_key_file: ~/.ssh/local_server_ansible_ed25519
-
-env_type: local
-configure_production_tls: false
-server_hostname: ares-local
