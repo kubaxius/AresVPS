@@ -1,11 +1,13 @@
 import typer
 
+from pantheon_systems_cli.vm.image import is_image_up_to_date
+
 app = typer.Typer()
 
 
 @app.command()
 def test() -> None:
-    print("It works!")
+    is_image_up_to_date()
 
 
 @app.command()

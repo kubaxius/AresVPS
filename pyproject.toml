@@ -11,6 +11,9 @@ dependencies = [
     "typer>=0.27.1",
 ]
 
+[tool.uv.build-backend]
+module-root = ""
+
 [project.scripts]
 pantheon = "pantheon_systems_cli:main"
 
