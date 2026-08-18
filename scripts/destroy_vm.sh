@@ -7,18 +7,26 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
+ASSUME_YES=false
+if [[ ${1:-} == "--yes" ]]; then
+  ASSUME_YES=true
+  shift
+fi
+
 if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 <vm-name>" >&2
+  echo "Usage: $0 [--yes] <vm-name>" >&2
   exit 2
 fi
 
 VM_NAME="$1"
 VM_DISK="/var/lib/libvirt/images/${VM_NAME}.qcow2"
 
-read -r -p "Destroy ${VM_NAME} and delete ${VM_DISK}? [y/N] " reply
-if [[ $reply != "y" && $reply != "Y" ]]; then
-  echo "Cancelled."
-  exit 0
+if [[ $ASSUME_YES == false ]]; then
+  read -r -p "Destroy ${VM_NAME} and delete ${VM_DISK}? [y/N] " reply
+  if [[ $reply != "y" && $reply != "Y" ]]; then
+    echo "Cancelled."
+    exit 0
+  fi
 fi
 
 if virsh --connect qemu:///system dominfo "$VM_NAME" >/dev/null 2>&1; then

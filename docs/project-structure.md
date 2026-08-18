@@ -127,12 +127,19 @@ The supported lifecycle commands are:
 ```console
 pantheon vm create ares-local
 pantheon vm start ares-local
+pantheon vm restart --all
+pantheon vm shutdown --all --force
+pantheon vm state --all
 pantheon vm destroy ares-local
+pantheon vm destroy --all
 ```
 
 Host arguments are validated against the local inventory and participate in
-shell completion. The privileged scripts receive resolved values as arguments;
-they contain no machine-specific names or addresses.
+shell completion. Pass `--all` instead of a host to apply any lifecycle command
+to every VM in the local inventory. Bulk destruction lists the affected hosts
+and asks for confirmation before proceeding. The privileged scripts receive
+resolved values as arguments; they contain no machine-specific names or
+addresses.
 
 Cloud-init is limited to bootstrap responsibilities: creating the `ansible` and
 `jbear` users, installing their authorized keys, installing Python and the QEMU

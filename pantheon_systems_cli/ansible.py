@@ -49,7 +49,11 @@ def _load_inventory(inventory: InventoryName) -> dict[str, JsonValue]:
     return inventory_data
 
 
-def _get_hostvars(inventory: InventoryName) -> dict[str, JsonValue]:
+def get_inventory_host_variables(
+    inventory: InventoryName,
+) -> dict[str, dict[str, JsonValue]]:
+    """Return the resolved variables for every canonical inventory host."""
+
     inventory_data = _load_inventory(inventory)
     metadata = inventory_data.get("_meta")
     if not isinstance(metadata, dict):
@@ -59,24 +63,28 @@ def _get_hostvars(inventory: InventoryName) -> dict[str, JsonValue]:
     if not isinstance(hostvars, dict):
         raise InventoryError("Ansible inventory does not contain host variables")
 
-    return hostvars
+    validated_hostvars: dict[str, dict[str, JsonValue]] = {}
+    for host, variables in hostvars.items():
+        if not isinstance(variables, dict):
+            raise InventoryError(f"Ansible returned invalid variables for host {host!r}")
+        validated_hostvars[host] = variables
+
+    return validated_hostvars
 
 
 def get_hosts_from_inventory(inventory: InventoryName) -> list[str]:
     """Return the canonical host names declared by an inventory."""
 
-    return sorted(_get_hostvars(inventory).keys())
+    return sorted(get_inventory_host_variables(inventory))
 
 
 def get_host_variables(host: str, inventory: InventoryName) -> dict[str, JsonValue]:
     """Return the resolved Ansible variables for one canonical host name."""
 
-    hostvars = _get_hostvars(inventory)
+    hostvars = get_inventory_host_variables(inventory)
     variables = hostvars.get(host)
 
     if variables is None:
         raise InventoryError(f"Host {host!r} is not in the {inventory!r} inventory")
-    if not isinstance(variables, dict):
-        raise InventoryError(f"Ansible returned invalid variables for host {host!r}")
 
     return variables
