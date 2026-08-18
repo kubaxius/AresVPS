@@ -7,9 +7,14 @@ from urllib.error import URLError
 from urllib.request import urlretrieve
 
 import typer
-
-from pantheon_systems_cli.config import HASH_PATH, IMAGE_HASH_URL, IMAGE_PATH, IMAGE_URL
 import pantheon_systems_cli.console as c
+from pantheon_systems_cli.config import (
+    HASH_PATH,
+    IMAGE_DIR,
+    IMAGE_HASH_URL,
+    IMAGE_PATH,
+    IMAGE_URL,
+)
 
 
 def _download(url: str, target_path: Path) -> None:
@@ -97,7 +102,7 @@ def update() -> None:
 
         if not _is_image_checksum_valid():
             IMAGE_PATH.unlink(missing_ok=True)
-            c.error("Checksum does not match downloaded image! try again.")
+            c.error("Checksum does not match the downloaded image. Please try again.")
             raise typer.Exit(1)
 
         c.success("Image successfully updated!")
@@ -114,3 +119,21 @@ def update() -> None:
     finally:
         if latest_hash_path is not None:
             latest_hash_path.unlink(missing_ok=True)
+
+
+@app.command()
+def download() -> None:
+    """Download the latest image when necessary."""
+    update()
+
+
+@app.command()
+def flush() -> None:
+    """Remove all files in the image downloading directory."""
+    try:
+        for file in IMAGE_DIR.iterdir():
+            file.unlink()
+            c.info(f"{file.name} successfully removed.")
+    except OSError as error:
+        c.error(f"Error: {error}")
+        raise typer.Exit(1)
