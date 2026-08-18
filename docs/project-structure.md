@@ -36,10 +36,10 @@ VPS/
 
 The Ansible inventory alias is the machine's identity everywhere:
 
-| Environment | Inventory name | OS hostname | Libvirt name |
-|-------------|----------------|-------------|--------------|
-| Production  | `ares`         | `ares`      | Not applicable |
-| Local       | `ares-local`   | `ares-local`| `ares-local` |
+| Environment | Inventory name | OS hostname  | Libvirt name   |
+| ----------- | -------------- | ------------ | -------------- |
+| Production  | `ares`         | `ares`       | Not applicable |
+| Local       | `ares-local`   | `ares-local` | `ares-local`   |
 
 Future machines follow the same convention: `hera` in production and
 `hera-local` for its local test VM. `ansible_host`, when present, is only a
