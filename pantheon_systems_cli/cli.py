@@ -1,5 +1,5 @@
 import typer
-
+from pantheon_systems_cli import console
 from pantheon_systems_cli.vm.cli import app as vm_app
 
 app = typer.Typer(
@@ -8,6 +8,18 @@ app = typer.Typer(
 )
 
 app.add_typer(vm_app, name="vm")
+
+
+@app.callback()
+def configure_application(
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        "-v",
+        help="Show detailed output.",
+    ),
+) -> None:
+    console.configure(verbose=verbose)
 
 
 def main() -> None:
