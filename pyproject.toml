@@ -15,7 +15,7 @@ dependencies = [
 module-root = ""
 
 [project.scripts]
-pantheon = "pantheon_systems_cli:main"
+pantheon = "pantheon_systems_cli.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]
