@@ -84,6 +84,8 @@ def _download_image() -> None:
 app = typer.Typer(help="Manage the VM system image.", no_args_is_help=True)
 
 
+# TODO: This currently overrides the existing file and only then checks if
+# new one is correct. Should be more robust.
 @app.command()
 def update() -> None:
     """Download the latest image when necessary."""
@@ -137,3 +139,6 @@ def flush() -> None:
     except OSError as error:
         c.error(f"Error: {error}")
         raise typer.Exit(1)
+
+
+# TODO: lock() command
