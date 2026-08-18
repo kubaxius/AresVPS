@@ -3,22 +3,20 @@
 from hashlib import sha256
 from hmac import compare_digest
 from pathlib import Path
-from urllib.error import HTTPError, URLError
+from urllib.error import URLError
 from urllib.request import urlretrieve
 
-from pantheon_systems_cli.config import HASH_PATH, IMAGE_HASH_URL, IMAGE_PATH, IMAGE_URL
+from pantheon_systems_cli.config import HASH_PATH, IMAGE_HASH_URL, IMAGE_PATH
 
 
-def download(url: str, target_path: Path) -> bool:
+def download(url: str, target_path: Path) -> None:
     temp_path: Path = target_path.with_suffix(target_path.suffix + ".tmp")
     try:
         urlretrieve(url, temp_path)
         temp_path.replace(target_path)
-        return True
-    except (HTTPError, URLError, OSError) as error:
+    except (URLError, OSError):
         temp_path.unlink(missing_ok=True)
-        print(f"Download failed: {error}")
-        return False
+        raise
 
 
 def get_image_checksum(file_path: Path = HASH_PATH) -> str | None:
@@ -35,28 +33,23 @@ def get_image_checksum(file_path: Path = HASH_PATH) -> str | None:
     return expected_checksum
 
 
-def is_image_up_to_date() -> bool:
-    new_hash_path: Path = HASH_PATH.with_name(f"{HASH_PATH.stem}_new{HASH_PATH.suffix}")
+def download_latest_checksum() -> Path:
+    new_hash_path = HASH_PATH.with_name(f"{HASH_PATH.stem}_new{HASH_PATH.suffix}")
+    download(IMAGE_HASH_URL, new_hash_path)
+    return new_hash_path
 
-    if not download(IMAGE_HASH_URL, new_hash_path):
-        return False
 
-    new_hash: str | None = get_image_checksum(new_hash_path)
-    if new_hash == None:
-        print("Hash file or url incorrect!")
-        new_hash_path.unlink(missing_ok=True)
-        return True
+def is_image_up_to_date(latest_hash_path: Path) -> bool:
+    latest_checksum = get_image_checksum(latest_hash_path)
 
-    if (
-        HASH_PATH.is_file()
-        and get_image_checksum(HASH_PATH) == new_hash
-        and is_image_checksum_valid()
-    ):
-        new_hash_path.unlink(missing_ok=True)
-        return True
+    if latest_checksum is None:
+        raise ValueError(
+            f"No checksum found for {IMAGE_PATH.name} in {latest_hash_path}"
+        )
 
-    new_hash_path.replace(HASH_PATH)
-    return False
+    return (
+        get_image_checksum(HASH_PATH) == latest_checksum and is_image_checksum_valid()
+    )
 
 
 def is_image_checksum_valid() -> bool:
@@ -74,15 +67,3 @@ def is_image_checksum_valid() -> bool:
             image_hash.update(chunk)
 
     return compare_digest(image_hash.hexdigest(), expected_checksum)
-
-
-def update_or_download_image():
-    if is_image_up_to_date():
-        print("Image file is up to date.")
-        return False
-    download(IMAGE_URL, IMAGE_PATH)
-    if not is_image_checksum_valid():
-        print("Downloaded image is corrupted! Try again.")
-        return False
-    print("Image updated.")
-    return True
