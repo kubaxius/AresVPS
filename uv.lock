@@ -21,6 +21,12 @@ wheels = [
 ]
 
 [[package]]
+name = "libvirt-python"
+version = "12.6.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/1d/18/b64bc6c6739405fddd451f78e756c17411d309265ec748683b806bd1dd47/libvirt_python-12.6.0.tar.gz", hash = "sha256:f390abff81d4afd6c33157ade82912863b87de9c35172e9b0c9f0dfcdc09b139", size = 252693, upload-time = "2026-08-03T09:51:28.683Z" }
+
+[[package]]
 name = "markdown-it-py"
 version = "4.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -42,15 +48,19 @@ wheels = [
 ]
 
 [[package]]
-name = "pantheon-systems"
+name = "pantheon-systems-cli"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "libvirt-python" },
     { name = "typer" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "typer", specifier = ">=0.27.1" }]
+requires-dist = [
+    { name = "libvirt-python", specifier = ">=12.6.0" },
+    { name = "typer", specifier = ">=0.27.1" },
+]
 
 [[package]]
 name = "pygments"
