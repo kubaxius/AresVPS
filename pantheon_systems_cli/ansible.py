@@ -1,20 +1,22 @@
 import json
 import subprocess
-from typing import TypeAlias, cast
+from typing import Literal, TypeAlias, cast
 
 from pantheon_systems_cli.config import ANSIBLE_INVENTORIES_PATH
 
-
+# It uses TypeAlias explicitly because it is recursive.
 JsonValue: TypeAlias = (
     None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
 )
+
+Inventory = Literal["local", "prod"]
 
 
 class InventoryError(RuntimeError):
     """Raised when an Ansible inventory cannot be loaded."""
 
 
-def _load_inventory(inventory: str) -> dict[str, JsonValue]:
+def _load_inventory(inventory: Inventory) -> dict[str, JsonValue]:
     inventory_path = ANSIBLE_INVENTORIES_PATH / inventory
 
     if not inventory_path.is_dir():
@@ -47,7 +49,7 @@ def _load_inventory(inventory: str) -> dict[str, JsonValue]:
     return inventory_data
 
 
-def _get_hostvars(inventory: str) -> dict[str, JsonValue]:
+def _get_hostvars(inventory: Inventory) -> dict[str, JsonValue]:
     inventory_data = _load_inventory(inventory)
     metadata = inventory_data.get("_meta")
     if not isinstance(metadata, dict):
@@ -60,13 +62,13 @@ def _get_hostvars(inventory: str) -> dict[str, JsonValue]:
     return hostvars
 
 
-def get_hosts_from_inventory(inventory: str = "local") -> list[str]:
+def get_hosts_from_inventory(inventory: Inventory) -> list[str]:
     """Return the canonical host names declared by an inventory."""
 
-    return sorted(_get_hostvars(inventory))
+    return sorted(_get_hostvars(inventory).keys())
 
 
-def get_host_variables(host: str, inventory: str = "local") -> dict[str, JsonValue]:
+def get_host_variables(host: str, inventory: Inventory) -> dict[str, JsonValue]:
     """Return the resolved Ansible variables for one canonical host name."""
 
     hostvars = _get_hostvars(inventory)
