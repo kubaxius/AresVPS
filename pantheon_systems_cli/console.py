@@ -17,7 +17,7 @@ def success(message: str, *, verbose_only: bool = False) -> None:
 def error(message: str, *, verbose_only: bool = False) -> None:
     if verbose_only and not _verbose:
         return
-        typer.secho(f"✗ {message}", fg=typer.colors.RED, err=True)
+    typer.secho(f"✗ {message}", fg=typer.colors.RED, err=True)
 
 
 def warning(message: str, *, verbose_only: bool = False) -> None:
