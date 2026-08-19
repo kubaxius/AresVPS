@@ -92,11 +92,11 @@ Host *-local
     IdentityFile ~/.ssh/pantheon_local_%r_ed25519
     IdentitiesOnly yes
     StrictHostKeyChecking accept-new
-    UserKnownHostsFile ~/.ssh/known_hosts.local-test
-    HostKeyAlias %n-vm
+    UserKnownHostsFile ~/.ssh/known_hosts_pantheon.local
 
 Host ares-local
     HostName 192.168.122.10
+    HostKeyAlias ares-local-vm
 ```
 
 For an interactive `ssh ares-local` session, `%r` expands to `jbear`. Ansible
@@ -108,7 +108,7 @@ Cloud-init installs the corresponding public keys from
 key, remove the old test-only entry before reconnecting:
 
 ```bash
-ssh-keygen -R ares-local-vm -f ~/.ssh/known_hosts.local-test
+ssh-keygen -R ares-local-vm -f ~/.ssh/known_hosts_pantheon.local
 ```
 
 ## Local VM flow
