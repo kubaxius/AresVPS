@@ -66,7 +66,9 @@ def get_inventory_host_variables(
     validated_hostvars: dict[str, dict[str, JsonValue]] = {}
     for host, variables in hostvars.items():
         if not isinstance(variables, dict):
-            raise InventoryError(f"Ansible returned invalid variables for host {host!r}")
+            raise InventoryError(
+                f"Ansible returned invalid variables for host {host!r}"
+            )
         validated_hostvars[host] = variables
 
     return validated_hostvars
