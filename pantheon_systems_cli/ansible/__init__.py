@@ -5,11 +5,13 @@ from pantheon_systems_cli.ansible.inventory import (
     InventoryName,
     InventoryError,
 )
+from pantheon_systems_cli.ansible.completion import local_host as complete_local_host
 
 __all__ = [
     "get_host_variables",
     "get_inventory_host_variables",
     "get_inventory_hosts",
+    "complete_local_host",
     "InventoryName",
     "InventoryError",
 ]

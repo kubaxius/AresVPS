@@ -7,7 +7,7 @@ import typer
 import pantheon_systems_cli.console as c
 from pantheon_systems_cli.ansible import (
     InventoryError,
-    get_inventory_hosts,
+    complete_local_host,
     get_inventory_host_variables,
 )
 from pantheon_systems_cli.bash import run_privileged_script
@@ -46,20 +46,6 @@ def _ignore_libvirt_error(
 
 
 libvirt.registerErrorHandler(_ignore_libvirt_error, None)
-
-
-def complete_local_host(incomplete: str) -> list[str]:
-    """
-    Complete canonical machine names from the local inventory
-    for use in autocompletion.
-    """
-
-    try:
-        hosts = get_inventory_hosts("local")
-    except InventoryError:
-        return []
-
-    return [host for host in hosts if host.startswith(incomplete)]
 
 
 LocalHost = Annotated[
