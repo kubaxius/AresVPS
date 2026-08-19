@@ -3,7 +3,8 @@ from pathlib import Path
 PROJECT_PATH: Path = Path(__file__).resolve().parent.parent
 SCRIPTS_PATH: Path = PROJECT_PATH / "scripts"
 ANSIBLE_INVENTORIES_PATH: Path = PROJECT_PATH / "ansible" / "inventories"
-
+LOCAL_INVENTORY_PATH: Path = ANSIBLE_INVENTORIES_PATH / "local"
+PROD_INVENTORY_PATH: Path = ANSIBLE_INVENTORIES_PATH / "prod"
 
 IMAGE_URL: str = (
     "https://cloud-images.ubuntu.com"
