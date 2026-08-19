@@ -50,7 +50,7 @@ VM-first roadmap for deploying the BearWorks Astro website. Complete each phase 
   - add `.env.example` containing every required variable name with placeholder values
   - add example OpenTofu variable files for local and production inputs
   - confirm examples contain no credentials, private keys, or real infrastructure identifiers
-- [ ] Add local commands to configure and test the VM with Ansible
+- [x] Add local commands to configure and test the VM with Ansible
 - [ ] Add formatting and validation commands for Ansible and OpenTofu
 - [x] Add YAML linting, `ansible-lint`, and Ansible syntax checks
 - [ ] Rebuild the VM from scratch and confirm Ansible can connect
