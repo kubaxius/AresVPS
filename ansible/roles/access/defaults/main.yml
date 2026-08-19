@@ -1,0 +1,10 @@
+---
+# ansible/roles/access/defaults/main.yml
+
+access_users:
+  - name: jbear
+    gecos: Jakub Niedzwiedz
+    ssh_keys: "{{ access_jbear_ssh_keys }}"
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+
+access_jbear_ssh_keys: []
