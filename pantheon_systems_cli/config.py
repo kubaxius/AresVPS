@@ -2,9 +2,11 @@ from pathlib import Path
 
 PROJECT_PATH: Path = Path(__file__).resolve().parent.parent
 SCRIPTS_PATH: Path = PROJECT_PATH / "scripts"
-ANSIBLE_INVENTORIES_PATH: Path = PROJECT_PATH / "ansible" / "inventories"
+ANSIBLE_PATH: Path = PROJECT_PATH / "ansible"
+ANSIBLE_INVENTORIES_PATH: Path = ANSIBLE_PATH / "inventories"
 LOCAL_INVENTORY_PATH: Path = ANSIBLE_INVENTORIES_PATH / "local"
 PROD_INVENTORY_PATH: Path = ANSIBLE_INVENTORIES_PATH / "prod"
+PLAYBOOK_PATH: Path = ANSIBLE_PATH / "site.yml"
 
 IMAGE_URL: str = (
     "https://cloud-images.ubuntu.com"
