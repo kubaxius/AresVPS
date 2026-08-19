@@ -8,9 +8,8 @@ import libvirt  # pyright: ignore[reportMissingTypeStubs]
 import typer
 from typer.testing import CliRunner
 
-from pantheon_systems_cli.ansible import InventoryError
+from pantheon_systems_cli.ansible.inventory import InventoryError
 from pantheon_systems_cli.cli import app
-
 
 HOST_VARIABLES = {
     "vm_network": "default",
@@ -88,9 +87,12 @@ class VmCliTests(unittest.TestCase):
             if args[0] == "alpha-local":
                 raise typer.Exit(7)
 
-        with self.inventory_patch(), patch(
-            "pantheon_systems_cli.vm.cli.run_privileged_script",
-            side_effect=run_script,
+        with (
+            self.inventory_patch(),
+            patch(
+                "pantheon_systems_cli.vm.cli.run_privileged_script",
+                side_effect=run_script,
+            ),
         ):
             result = self.invoke("create", "--all")
 
@@ -99,9 +101,12 @@ class VmCliTests(unittest.TestCase):
         self.assertIn("Operation failed for 1 VM(s): alpha-local", result.output)
 
     def test_single_script_command_preserves_exit_code(self) -> None:
-        with self.inventory_patch(), patch(
-            "pantheon_systems_cli.vm.cli.run_privileged_script",
-            side_effect=typer.Exit(7),
+        with (
+            self.inventory_patch(),
+            patch(
+                "pantheon_systems_cli.vm.cli.run_privileged_script",
+                side_effect=typer.Exit(7),
+            ),
         ):
             result = self.invoke("create", "alpha-local")
 
@@ -119,10 +124,13 @@ class VmCliTests(unittest.TestCase):
 
         connection.lookupByName.side_effect = lookup_domain
 
-        with self.inventory_patch() as load_inventory, patch(
-            "pantheon_systems_cli.vm.cli.libvirt.open",
-            return_value=connection,
-        ) as open_connection:
+        with (
+            self.inventory_patch() as load_inventory,
+            patch(
+                "pantheon_systems_cli.vm.cli.libvirt.open",
+                return_value=connection,
+            ) as open_connection,
+        ):
             result = self.invoke("state", "--all")
 
         self.assertEqual(result.exit_code, 0)
@@ -141,9 +149,12 @@ class VmCliTests(unittest.TestCase):
         connection = Mock()
         connection.lookupByName.side_effect = [first, second]
 
-        with self.inventory_patch(), patch(
-            "pantheon_systems_cli.vm.cli.libvirt.open",
-            return_value=connection,
+        with (
+            self.inventory_patch(),
+            patch(
+                "pantheon_systems_cli.vm.cli.libvirt.open",
+                return_value=connection,
+            ),
         ):
             result = self.invoke("state", "--all")
 
@@ -161,9 +172,12 @@ class VmCliTests(unittest.TestCase):
                     connection = Mock()
                     connection.lookupByName.return_value = domain
 
-                    with self.inventory_patch(), patch(
-                        "pantheon_systems_cli.vm.cli.libvirt.open",
-                        return_value=connection,
+                    with (
+                        self.inventory_patch(),
+                        patch(
+                            "pantheon_systems_cli.vm.cli.libvirt.open",
+                            return_value=connection,
+                        ),
                     ):
                         result = self.invoke(command, *selector)
 
@@ -176,9 +190,12 @@ class VmCliTests(unittest.TestCase):
         connection = Mock()
         connection.lookupByName.return_value = domain
 
-        with self.inventory_patch(), patch(
-            "pantheon_systems_cli.vm.cli.libvirt.open",
-            return_value=connection,
+        with (
+            self.inventory_patch(),
+            patch(
+                "pantheon_systems_cli.vm.cli.libvirt.open",
+                return_value=connection,
+            ),
         ):
             result = self.invoke("shutdown", "--all", "--force")
 
@@ -186,9 +203,10 @@ class VmCliTests(unittest.TestCase):
         self.assertEqual(domain.destroy.call_count, 2)
 
     def test_destroy_all_cancellation_runs_no_scripts(self) -> None:
-        with self.inventory_patch(), patch(
-            "pantheon_systems_cli.vm.cli.run_privileged_script"
-        ) as run_script:
+        with (
+            self.inventory_patch(),
+            patch("pantheon_systems_cli.vm.cli.run_privileged_script") as run_script,
+        ):
             result = self.invoke("destroy", "--all", input="n\n")
 
         self.assertEqual(result.exit_code, 0)
@@ -198,9 +216,10 @@ class VmCliTests(unittest.TestCase):
         run_script.assert_not_called()
 
     def test_destroy_all_confirms_once_and_skips_script_prompts(self) -> None:
-        with self.inventory_patch(), patch(
-            "pantheon_systems_cli.vm.cli.run_privileged_script"
-        ) as run_script:
+        with (
+            self.inventory_patch(),
+            patch("pantheon_systems_cli.vm.cli.run_privileged_script") as run_script,
+        ):
             result = self.invoke("destroy", "--all", input="y\n")
 
         self.assertEqual(result.exit_code, 0)
@@ -213,9 +232,10 @@ class VmCliTests(unittest.TestCase):
         )
 
     def test_single_destroy_retains_script_confirmation(self) -> None:
-        with self.inventory_patch(), patch(
-            "pantheon_systems_cli.vm.cli.run_privileged_script"
-        ) as run_script:
+        with (
+            self.inventory_patch(),
+            patch("pantheon_systems_cli.vm.cli.run_privileged_script") as run_script,
+        ):
             result = self.invoke("destroy", "alpha-local")
 
         self.assertEqual(result.exit_code, 0)

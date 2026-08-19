@@ -5,7 +5,7 @@ import libvirt  # pyright: ignore[reportMissingTypeStubs]
 import typer
 
 import pantheon_systems_cli.console as c
-from pantheon_systems_cli.ansible import (
+from pantheon_systems_cli.ansible.inventory import (
     InventoryError,
     JsonValue,
     get_hosts_from_inventory,
