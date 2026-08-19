@@ -45,10 +45,10 @@ def _load_inventory(inventory: InventoryName) -> dict[str, JsonValue]:
     return inventory_data
 
 
-def get_inventory_host_variables(
+def get_host_variables(
     inventory: InventoryName,
 ) -> dict[str, dict[str, JsonValue]]:
-    """Return the resolved variables for every canonical inventory host."""
+    """Return all of the resolved variables for every canonical inventory host."""
 
     inventory_data = _load_inventory(inventory)
     metadata = inventory_data.get("_meta")
@@ -70,7 +70,7 @@ def get_inventory_host_variables(
     return validated_hostvars
 
 
-def get_hosts_from_inventory(inventory: InventoryName) -> list[str]:
-    """Return the canonical host names declared by an inventory."""
+def get_hosts(inventory: InventoryName) -> list[str]:
+    """Return all of the canonical host names declared by an inventory."""
 
-    return sorted(get_inventory_host_variables(inventory))
+    return sorted(get_host_variables(inventory))

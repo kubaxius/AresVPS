@@ -8,7 +8,7 @@ import libvirt  # pyright: ignore[reportMissingTypeStubs]
 import typer
 from typer.testing import CliRunner
 
-from pantheon_systems_cli.ansible.inventory import InventoryError
+from pantheon_systems_cli.ansible import InventoryError
 from pantheon_systems_cli.cli import app
 
 HOST_VARIABLES = {

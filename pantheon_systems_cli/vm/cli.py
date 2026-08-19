@@ -5,13 +5,13 @@ import libvirt  # pyright: ignore[reportMissingTypeStubs]
 import typer
 
 import pantheon_systems_cli.console as c
-from pantheon_systems_cli.ansible.inventory import (
+from pantheon_systems_cli.ansible import (
     InventoryError,
-    JsonValue,
-    get_hosts_from_inventory,
+    get_inventory_hosts,
     get_inventory_host_variables,
 )
 from pantheon_systems_cli.bash import run_privileged_script
+from pantheon_systems_cli.types import JsonValue
 from pantheon_systems_cli.vm.image import app as image_app
 
 type VmOperation = Callable[[str, libvirt.virDomain], None]
@@ -55,7 +55,7 @@ def complete_local_host(incomplete: str) -> list[str]:
     """
 
     try:
-        hosts = get_hosts_from_inventory("local")
+        hosts = get_inventory_hosts("local")
     except InventoryError:
         return []
 

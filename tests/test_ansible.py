@@ -3,11 +3,11 @@
 import unittest
 from unittest.mock import patch
 
-from pantheon_systems_cli.ansible.host import get_host_variables
-from pantheon_systems_cli.ansible.inventory import (
+from pantheon_systems_cli.ansible import (
     InventoryError,
-    get_hosts_from_inventory,
+    get_inventory_hosts,
     get_inventory_host_variables,
+    get_host_variables,
 )
 
 
@@ -27,7 +27,7 @@ class InventoryHostVariablesTests(unittest.TestCase):
             return_value=inventory,
         ):
             host_variables = get_inventory_host_variables("local")
-            hosts = get_hosts_from_inventory("local")
+            hosts = get_inventory_hosts("local")
             variables = get_host_variables("alpha-local", "local")
 
         self.assertEqual(host_variables, inventory["_meta"]["hostvars"])
