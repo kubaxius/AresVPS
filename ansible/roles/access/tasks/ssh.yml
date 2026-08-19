@@ -1,0 +1,19 @@
+---
+# ansible/roles/access/tasks/ssh.yml
+
+- name: Create ssh drop-in directory
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Disable ssh password authentication and root login
+  ansible.builtin.copy:
+    src: sshd_config.d/90-pantheon-settings.conf
+    dest: /etc/ssh/sshd_config.d/90-pantheon-settings.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Access | Restart ssh
