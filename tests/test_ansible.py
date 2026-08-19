@@ -5,8 +5,8 @@ from unittest.mock import patch
 
 from pantheon_systems_cli.ansible import (
     InventoryError,
-    get_inventory_hosts,
-    get_inventory_host_variables,
+    get_all_hosts,
+    get_all_host_variables,
     get_host_variables,
 )
 
@@ -26,8 +26,8 @@ class InventoryHostVariablesTests(unittest.TestCase):
             "pantheon_systems_cli.ansible.inventory._load_inventory",
             return_value=inventory,
         ):
-            host_variables = get_inventory_host_variables("local")
-            hosts = get_inventory_hosts("local")
+            host_variables = get_all_host_variables("local")
+            hosts = get_all_hosts("local")
             variables = get_host_variables("alpha-local", "local")
 
         self.assertEqual(host_variables, inventory["_meta"]["hostvars"])
@@ -42,7 +42,7 @@ class InventoryHostVariablesTests(unittest.TestCase):
             return_value=inventory,
         ):
             with self.assertRaisesRegex(InventoryError, "alpha-local"):
-                get_inventory_host_variables("local")
+                get_all_host_variables("local")
 
 
 if __name__ == "__main__":

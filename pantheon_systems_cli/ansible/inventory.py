@@ -45,7 +45,7 @@ def _load_inventory(inventory: InventoryName) -> dict[str, JsonValue]:
     return inventory_data
 
 
-def get_host_variables(
+def get_all_host_variables(
     inventory: InventoryName,
 ) -> dict[str, dict[str, JsonValue]]:
     """Return all of the resolved variables for every canonical inventory host."""
@@ -70,7 +70,7 @@ def get_host_variables(
     return validated_hostvars
 
 
-def get_hosts(inventory: InventoryName) -> list[str]:
+def get_all_hosts(inventory: InventoryName) -> list[str]:
     """Return all of the canonical host names declared by an inventory."""
 
-    return sorted(get_host_variables(inventory))
+    return sorted(get_all_host_variables(inventory))

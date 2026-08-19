@@ -8,7 +8,7 @@ import pantheon_systems_cli.console as c
 from pantheon_systems_cli.ansible import (
     InventoryError,
     complete_local_host,
-    get_inventory_host_variables,
+    get_all_host_variables,
 )
 from pantheon_systems_cli.bash import run_privileged_script
 from pantheon_systems_cli.types import JsonValue
@@ -70,7 +70,7 @@ def _resolve_targets(host: str | None, all_hosts: bool) -> list[VmTarget]:
         raise typer.BadParameter("Specify exactly one of HOST or --all.")
 
     try:
-        host_variables = get_inventory_host_variables("local")
+        host_variables = get_all_host_variables("local")
     except InventoryError as error:
         c.error(str(error))
         raise typer.Exit(1) from error

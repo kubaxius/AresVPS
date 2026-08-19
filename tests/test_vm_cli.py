@@ -37,7 +37,7 @@ class VmCliTests(unittest.TestCase):
         hosts: dict[str, dict[str, object]] | None = None,
     ) -> Any:
         return patch(
-            "pantheon_systems_cli.vm.cli.get_inventory_host_variables",
+            "pantheon_systems_cli.vm.cli.get_all_host_variables",
             return_value=hosts
             or {
                 "beta-local": HOST_VARIABLES,
@@ -58,7 +58,7 @@ class VmCliTests(unittest.TestCase):
             unknown = self.invoke("state", "missing-local")
 
         with patch(
-            "pantheon_systems_cli.vm.cli.get_inventory_host_variables",
+            "pantheon_systems_cli.vm.cli.get_all_host_variables",
             return_value={},
         ):
             empty = self.invoke("state", "--all")
@@ -70,7 +70,7 @@ class VmCliTests(unittest.TestCase):
 
     def test_inventory_loading_failure_is_reported(self) -> None:
         with patch(
-            "pantheon_systems_cli.vm.cli.get_inventory_host_variables",
+            "pantheon_systems_cli.vm.cli.get_all_host_variables",
             side_effect=InventoryError("inventory unavailable"),
         ):
             result = self.invoke("state", "--all")
