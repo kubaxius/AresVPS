@@ -55,4 +55,16 @@ else
   echo "No VM disk found at ${VM_DISK}."
 fi
 
+SSH_USER="${SUDO_USER:-root}"
+SSH_HOME="$(getent passwd "$SSH_USER" | cut -d: -f6)"
+SSH_KNOWN_HOSTS="${SSH_HOME}/.ssh/known_hosts_pantheon.local"
+
+if [[ -f $SSH_KNOWN_HOSTS ]]; then
+  if [[ $SSH_USER == root ]]; then
+    ssh-keygen -R "${VM_NAME}-vm" -f "$SSH_KNOWN_HOSTS"
+  else
+    sudo -u "$SSH_USER" -- ssh-keygen -R "${VM_NAME}-vm" -f "$SSH_KNOWN_HOSTS"
+  fi
+fi
+
 echo "${VM_NAME} has been removed."
