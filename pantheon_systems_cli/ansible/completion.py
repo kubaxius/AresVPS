@@ -3,6 +3,7 @@ from pantheon_systems_cli.ansible.inventory import (
     InventoryError,
     InventoryName,
 )
+from pantheon_systems_cli.config import ANSIBLE_ROLES_PATH
 
 
 def complete_host(incomplete: str, inventory: InventoryName) -> list[str]:
@@ -33,3 +34,16 @@ def complete_prod_host(incomplete: str) -> list[str]:
     for use in autocompletion.
     """
     return complete_host(incomplete, "prod")
+
+
+def complete_roles(incomplete: str) -> list[str]:
+    """
+    Complete canonical ansible role names
+    for use in autocompletion.
+    """
+
+    return sorted(
+        path.name
+        for path in ANSIBLE_ROLES_PATH.iterdir()
+        if path.is_dir() and path.name.startswith(incomplete)
+    )
