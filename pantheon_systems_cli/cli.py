@@ -1,6 +1,7 @@
 import typer
 from pantheon_systems_cli import console
 from pantheon_systems_cli.vm.cli import app as vm_app
+from pantheon_systems_cli.ansible.cli import app as ansible_app
 
 app = typer.Typer(
     help="Manage Pantheon systems.",
@@ -8,6 +9,7 @@ app = typer.Typer(
 )
 
 app.add_typer(vm_app, name="vm")
+app.add_typer(ansible_app, name="ans")
 
 
 @app.callback()
