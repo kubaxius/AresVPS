@@ -4,6 +4,7 @@ PROJECT_PATH: Path = Path(__file__).resolve().parent.parent
 SCRIPTS_PATH: Path = PROJECT_PATH / "scripts"
 ANSIBLE_PATH: Path = PROJECT_PATH / "ansible"
 ANSIBLE_INVENTORIES_PATH: Path = ANSIBLE_PATH / "inventories"
+ANSIBLE_ROLES_PATH: Path = ANSIBLE_PATH / "roles"
 LOCAL_INVENTORY_PATH: Path = ANSIBLE_INVENTORIES_PATH / "local"
 PROD_INVENTORY_PATH: Path = ANSIBLE_INVENTORIES_PATH / "prod"
 PLAYBOOK_PATH: Path = ANSIBLE_PATH / "site.yml"
