@@ -7,12 +7,16 @@
     groups: "{{ item.groups }}"
     append: true
   loop: "{{ access_users }}"
+  loop_control:
+    label: "{{ item.name }}"
 
 - name: Add ssh keys to access users
   ansible.posix.authorized_key:
     user: "{{ item.name }}"
     key: "{{ item.ssh_keys | join('\n') }}"
   loop: "{{ access_users }}"
+  loop_control:
+    label: "{{ item.name }}"
 
 - name: Apply sudoers rules of access users
   ansible.builtin.copy:
@@ -24,3 +28,5 @@
     validate: "/usr/sbin/visudo -cf %s"
   when: item.sudo is defined
   loop: "{{ access_users }}"
+  loop_control:
+    label: "{{ item.name }}"
