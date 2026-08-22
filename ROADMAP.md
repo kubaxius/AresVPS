@@ -38,7 +38,7 @@ VM-first roadmap for deploying the BearWorks Astro website. Complete each phase 
   - install required system packages
   - configure unattended security upgrades
   - configure journald limits and log rotation
-- [ ] Complete the steady-state access role:
+- [x] Complete the steady-state access role:
   - manage administrative users, authorized keys, and sudo policy
   - enforce key-only SSH authentication
   - disable SSH password authentication

@@ -1,4 +1,7 @@
 ---
 # ansible/roles/access/tasks/main.yml
-- name: Set up ssh
+- name: Set up access users
+  ansible.builtin.import_tasks: accounts.yml
+
+- name: Set up ssh rules
   ansible.builtin.import_tasks: ssh.yml

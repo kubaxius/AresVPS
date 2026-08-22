@@ -5,6 +5,8 @@ access_users:
   - name: jbear
     gecos: Jakub Niedzwiedz
     ssh_keys: "{{ access_jbear_ssh_keys }}"
+    groups:
+      - sudo
     sudo: "ALL=(ALL) NOPASSWD:ALL"
 
 access_jbear_ssh_keys: []

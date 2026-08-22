@@ -1,2 +1,26 @@
 ---
 # ansible/roles/access/tasks/accounts.yml
+- name: Create access users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    comment: "{{ item.gecos }}"
+    groups: "{{ item.groups }}"
+    append: true
+  loop: "{{ access_users }}"
+
+- name: Add ssh keys to access users
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.ssh_keys | join('\n') }}"
+  loop: "{{ access_users }}"
+
+- name: Apply sudoers rules of access users
+  ansible.builtin.copy:
+    content: "{{ item.name }} {{ item.sudo }}\n"
+    dest: "/etc/sudoers.d/{{ item.name }}"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"
+  when: item.sudo is defined
+  loop: "{{ access_users }}"
