@@ -1,0 +1,17 @@
+---
+# roles/base/tasks/assert_system.yml
+
+- name: Check for cloud-image marker
+  ansible.builtin.stat:
+    path: /etc/cloud/build.info
+  register: base_cloud_build_info
+
+- name: Require an Ubuntu cloud image
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] == 'Ubuntu'
+      - base_cloud_build_info.stat.exists
+      - base_cloud_build_info.stat.isreg
+    fail_msg: >-
+      Expected an Ubuntu Server cloud image, but this host does not
+      appear to be one.

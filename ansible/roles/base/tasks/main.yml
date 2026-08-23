@@ -1,6 +1,9 @@
 ---
 # ansible/roles/base/tasks/main.yml
 
+- name: Assert Ubuntu Server Image
+  ansible.builtin.import_tasks: assert_system.yml
+
 - name: Set timezone
   community.general.timezone:
     name: "{{ server_timezone }}"
