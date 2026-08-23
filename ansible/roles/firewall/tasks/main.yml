@@ -1,2 +1,39 @@
 ---
 # ansible/roles/firewall/tasks/main.yml
+
+- name: Set up defaults
+  notify: Firewall | Reload Firewall
+  when: firewall_enabled
+  block:
+    - name: Set outgoing rule
+      community.general.ufw:
+        default: "{{ firewall_default_policies.outgoing }}"
+        direction: outgoing
+    - name: Set incoming rule
+      community.general.ufw:
+        default: "{{ firewall_default_policies.incoming }}"
+        direction: incoming
+    - name: Set routed rule
+      community.general.ufw:
+        default: "{{ firewall_default_policies.routed }}"
+        direction: routed
+    - name: Configure logging
+      community.general.ufw:
+        logging: "{{ firewall_logging }}"
+
+# TODO: Create own ansible module that will remove rules that are not on
+# the list, so that the list becomes the exclusive source of truth for UFW.
+- name: Configure firewall rules
+  community.general.ufw:
+    rule: "{{ item.rule }}"
+    direction: "{{ item.direction | default('in') }}"
+    proto: "{{ item.protocol | default(omit) }}"
+    port: "{{ item.port | default(omit) }}"
+    src: "{{ item.src | default('any') }}"
+    comment: "{{ item.comment | default(omit) }}"
+  loop: "{{ firewall_rules }}"
+  when: firewall_enabled
+
+- name: Set firewall state
+  community.general.ufw:
+    state: "{{ firewall_enabled | ternary('enabled', 'disabled') }}"

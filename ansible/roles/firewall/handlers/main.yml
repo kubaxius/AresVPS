@@ -1,0 +1,5 @@
+---
+# ansible/roles/firewall/handlers/main.yml
+- name: Firewall | Reload Firewall
+  community.general.ufw:
+    state: reloaded

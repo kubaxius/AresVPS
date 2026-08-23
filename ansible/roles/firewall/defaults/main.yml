@@ -1,0 +1,25 @@
+---
+# ansible/roles/firewall/defaults/main.yml
+
+firewall_enabled: true
+firewall_logging: low
+
+firewall_default_policies:
+  incoming: deny
+  outgoing: allow
+  routed: deny
+
+firewall_rules:
+  - comment: ssh-on-lan
+    rule: allow
+    protocol: tcp
+    port: "22"
+    src: 192.168.122.0/24
+  - comment: http
+    rule: allow
+    protocol: tcp
+    port: "80"
+  - comment: https
+    rule: allow
+    protocol: tcp
+    port: "443"
