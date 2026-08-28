@@ -25,7 +25,7 @@ VM-first roadmap for deploying the BearWorks Astro website. Complete each phase 
 - [ ] Pin the Ubuntu cloud image and record its checksum
 - [x] Replace the single inventory with separate `local` and `prod` inventories using canonical machine names
 - [x] Add shared variables and environment-specific variables
-- [ ] Keep production TLS, production DNS, and the production Tailscale identity disabled in the local inventory
+- [x] Keep production TLS, production DNS, and the production Tailscale identity disabled in the local inventory
 - [x] Refactor `site.yml` so roles run in this deterministic order:
   - base system
   - access and SSH
@@ -44,7 +44,7 @@ VM-first roadmap for deploying the BearWorks Astro website. Complete each phase 
   - disable SSH password authentication
   - disable direct root SSH login
   - validate SSH configuration before reloading
-- [ ] Complete the firewall role while keeping local and production rules configurable
+- [x] Complete the firewall role while keeping local and production rules configurable
 - [ ] Add Ansible Vault configuration and encrypted environment variables
 - [ ] Add safe example configuration files:
   - add `.env.example` containing every required variable name with placeholder values
@@ -53,9 +53,9 @@ VM-first roadmap for deploying the BearWorks Astro website. Complete each phase 
 - [x] Add local commands to configure and test the VM with Ansible
 - [ ] Add formatting and validation commands for Ansible and OpenTofu
 - [x] Add YAML linting, `ansible-lint`, and Ansible syntax checks
-- [ ] Rebuild the VM from scratch and confirm Ansible can connect
-- [ ] Run the complete playbook twice and confirm the second run is idempotent
-- [ ] Confirm key-based SSH succeeds and password-based and root SSH fail
+- [x] Rebuild the VM from scratch and confirm Ansible can connect
+- [x] Run the complete playbook twice and confirm the second run is idempotent
+- [x] Confirm key-based SSH succeeds and password-based and root SSH fail
 - [ ] **Gate:** do not proceed until a clean VM can be recreated and configured without manual server changes
 
 ## Phase 2 — Prepare the Astro project for self-hosting
