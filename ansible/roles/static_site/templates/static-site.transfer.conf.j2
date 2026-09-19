@@ -1,0 +1,15 @@
+# ai_generated
+[Transfer]
+Verify=yes
+
+[Source]
+Type=url-tar
+Path=http://127.0.0.1:{{ static_site_feed_port }}/
+MatchPattern={{ static_site_name }}-@v.tar.gz
+
+[Target]
+Type=directory
+Path={{ static_site_root }}
+MatchPattern=releases/@v
+CurrentSymlink=staged
+InstancesMax={{ static_site_release_retention | int + 1 }}

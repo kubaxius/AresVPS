@@ -1,0 +1,15 @@
+---
+# ai_generated
+- name: Rebuild systemd import keyring
+  ansible.builtin.command:
+    argv: [/usr/bin/gpg, --batch, --yes, --dearmor, --output, /etc/systemd/import-pubring.gpg, /etc/systemd/import-pubring.asc]
+  changed_when: true
+
+- name: Reload systemd
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Reload Nginx
+  ansible.builtin.systemd_service:
+    name: nginx
+    state: reloaded

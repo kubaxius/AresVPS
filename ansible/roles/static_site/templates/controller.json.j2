@@ -1,0 +1,13 @@
+{# ai_generated #}
+{
+  "site_name": {{ static_site_name | to_json }},
+  "site_root": {{ static_site_root | to_json }},
+  "definitions_path": {{ static_site_sysupdate_definitions_path | to_json }},
+  "required_entrypoints": {{ static_site_required_entrypoints | to_json }},
+  "health_check_address": {{ static_site_health_check_address | to_json }},
+  "health_check_port": {{ static_site_health_check_port | int }},
+  "staging_health_check_port": {{ static_site_staging_health_port | int }},
+  "health_check_host": {{ static_site_health_check_host | to_json }},
+  "health_check_timeout": {{ static_site_health_check_timeout | int }},
+  "health_checks": {{ static_site_health_checks | to_json }}
+}

@@ -1,2 +1,17 @@
 ---
-# ansible/roles/static_site/tasks/nginx.yml
+# ai_generated
+- name: Install static site Nginx configuration
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: "/etc/nginx/sites-available/{{ static_site_name }}.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload Nginx
+
+- name: Enable static site Nginx configuration
+  ansible.builtin.file:
+    state: link
+    src: "/etc/nginx/sites-available/{{ static_site_name }}.conf"
+    dest: "/etc/nginx/sites-enabled/{{ static_site_name }}.conf"
+  notify: Reload Nginx

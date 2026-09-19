@@ -1,0 +1,23 @@
+# ai_generated
+server {
+    listen 127.0.0.1:{{ static_site_feed_port }};
+    server_name _;
+    root {{ static_site_root }}/incoming;
+    location / { try_files $uri =404; }
+}
+
+server {
+    listen 127.0.0.1:{{ static_site_staging_health_port }};
+    server_name _;
+    root {{ static_site_root }}/staged;
+    location = / { return 308 /pl/; }
+    location / { try_files $uri $uri/ =404; }
+}
+
+server {
+    listen {{ static_site_health_check_port }};
+    server_name {{ static_site_domain }};
+    root {{ static_site_root }}/current;
+    location = / { return 308 /pl/; }
+    location / { try_files $uri $uri/ =404; }
+}
