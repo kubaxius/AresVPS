@@ -1,0 +1,39 @@
+#!/usr/bin/python3 -I
+
+# ai_generated
+"""Ansible-rendered entry point for one static website."""
+
+import json
+import sys
+
+
+# Isolated mode ignores PYTHONPATH and user packages. This explicit, root-owned
+# directory is therefore the only non-standard location used for imports.
+sys.path.insert(0, "/usr/local/lib/static-site-release")
+
+from static_site_release import main
+
+
+# Ansible serializes every value instead of constructing Python source from
+# unescaped text. The shared module validates this mapping before using it.
+SITE_CONFIG: dict[str, object] = {
+    "site_name": {{ static_site_name | to_json }},
+    "site_root": {{ static_site_root | to_json }},
+    "web_group": {{ static_site_web_group | to_json }},
+    "manifest_schema_version": {{ static_site_manifest_schema_version | int }},
+    "release_retention": {{ static_site_release_retention | int }},
+    "archive_max_members": {{ static_site_archive_max_members | int }},
+    "archive_max_expanded_size": {{ static_site_archive_max_expanded_size | int }},
+    "required_entrypoints": json.loads(
+        {{ static_site_required_entrypoints | to_json | to_json }}
+    ),
+    "health_check_address": {{ static_site_health_check_address | to_json }},
+    "health_check_port": {{ static_site_health_check_port | int }},
+    "health_check_host": {{ static_site_health_check_host | to_json }},
+    "health_check_timeout": {{ static_site_health_check_timeout | int }},
+    "health_checks": json.loads({{ static_site_health_checks | to_json | to_json }}),
+}
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(SITE_CONFIG))

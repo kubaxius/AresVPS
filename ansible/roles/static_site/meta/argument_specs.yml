@@ -1,0 +1,76 @@
+---
+# ai_generated
+argument_specs:
+  main:
+    short_description: Configure an atomic static-site release target
+    description:
+      - Creates a restricted deployment account and release directories.
+      - Installs shared release logic and a configured per-site launcher.
+    options:
+      static_site_name:
+        type: str
+        required: true
+      static_site_root:
+        type: path
+        required: true
+      static_site_domain:
+        type: str
+        required: true
+      static_site_user_name:
+        type: str
+        required: true
+      static_site_user_gecos:
+        type: str
+        required: true
+      static_site_web_group:
+        type: str
+        required: true
+      static_site_user_groups:
+        type: list
+        elements: str
+        required: true
+      static_site_script_file_name:
+        type: str
+        required: true
+      static_site_manifest_schema_version:
+        type: int
+        required: true
+      static_site_release_retention:
+        type: int
+        required: true
+      static_site_archive_max_members:
+        type: int
+        required: true
+      static_site_archive_max_expanded_size:
+        type: int
+        required: true
+      static_site_required_entrypoints:
+        type: list
+        elements: str
+        required: true
+      static_site_health_check_address:
+        type: str
+        required: true
+      static_site_health_check_port:
+        type: int
+        required: true
+      static_site_health_check_host:
+        type: str
+        required: true
+      static_site_health_check_timeout:
+        type: int
+        required: true
+      static_site_health_checks:
+        type: list
+        elements: dict
+        required: true
+        options:
+          path:
+            type: str
+            required: true
+          status:
+            type: int
+            required: true
+          location:
+            type: str
+            required: false

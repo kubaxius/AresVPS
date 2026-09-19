@@ -1,2 +1,103 @@
 ---
 # ansible/roles/static_site/tasks/main.yml
+
+# ai_generated:start
+- name: Validate static site configuration
+  ansible.builtin.assert:
+    that:
+      - static_site_name is match('^[a-z0-9][a-z0-9._-]*$')
+      - static_site_root is match('^/srv/www/[a-z0-9][a-z0-9._-]*$')
+      - static_site_domain | length > 0
+      - static_site_user_name is match('^[a-z_][a-z0-9_-]*[$]?$')
+      - static_site_web_group is match('^[a-z_][a-z0-9_-]*[$]?$')
+      - static_site_script_file_name is match('^[A-Za-z0-9][A-Za-z0-9._-]*$')
+      - static_site_manifest_schema_version | int > 0
+      - static_site_release_retention | int >= 0
+      - static_site_archive_max_members | int > 0
+      - static_site_archive_max_expanded_size | int > 0
+      - static_site_required_entrypoints | length > 0
+      - static_site_health_check_port | int > 0
+      - static_site_health_check_port | int <= 65535
+      - static_site_health_check_timeout | int > 0
+      - static_site_health_checks | length > 0
+# ai_generated:end
+
+- name: Create web server group
+  ansible.builtin.group:
+    name: "{{ static_site_web_group }}"
+    state: present
+
+- name: Create static site user groups
+  ansible.builtin.group:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ static_site_user_groups }}"
+
+- name: Create user
+  ansible.builtin.user:
+    name: "{{ static_site_user_name }}"
+    comment: "{{ static_site_user_gecos }}"
+    groups: "{{ static_site_user_groups | join(',') }}"
+    append: true
+
+- name: Create static site root
+  ansible.builtin.file:
+    state: directory
+    path: "{{ static_site_root }}"
+    owner: root
+    group: "{{ static_site_web_group }}"
+    mode: "0750"
+
+- name: Create incoming directory
+  ansible.builtin.file:
+    state: directory
+    path: "{{ static_site_root }}/incoming"
+    owner: "{{ static_site_user_name }}"
+    group: "{{ static_site_user_name }}"
+    mode: "0750"
+
+- name: Create releases directory
+  ansible.builtin.file:
+    state: directory
+    path: "{{ static_site_root }}/releases"
+    owner: "root"
+    group: "{{ static_site_web_group }}"
+    mode: "0750"
+
+# ai_generated:start
+- name: Create shared static site release library directory
+  ansible.builtin.file:
+    state: directory
+    path: "/usr/local/lib/static-site-release"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install shared static site release logic
+  ansible.builtin.copy:
+    src: "static_site_release.py"
+    dest: "/usr/local/lib/static-site-release/static_site_release.py"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install static site release launcher
+  ansible.builtin.template:
+    src: "static_site_release_launcher.py.j2"
+    dest: "/usr/local/sbin/{{ static_site_script_file_name }}"
+    owner: root
+    group: root
+    mode: "0755"
+# ai_generated:end
+
+- name: Apply sudoers rules of access users
+  ansible.builtin.copy:
+    content: >
+      {{ static_site_user_name }}
+      ALL=(root) NOPASSWD:
+      /usr/local/sbin/{{ static_site_script_file_name }} *
+    dest: "/etc/sudoers.d/{{ static_site_user_name }}"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"

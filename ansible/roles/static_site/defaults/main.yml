@@ -1,0 +1,42 @@
+---
+# ansible/roles/static_site/defaults/main.yml
+
+static_site_name: "bearworks"
+# ai_generated:start
+static_site_root: "/srv/www/{{ static_site_name }}"
+static_site_domain: "bearworks.pl"
+# ai_generated:end
+
+static_site_user_name: "bearworks-deploy"
+static_site_user_gecos: "BearWorks Website Deployer"
+# ai_generated:start
+static_site_web_group: "www-data"
+# ai_generated:end
+static_site_user_groups:
+  - "{{ static_site_user_name }}"
+  - "website_deployers"
+  - "{{ static_site_web_group }}"
+
+static_site_script_file_name: "bearworks-release"
+# ai_generated:start
+static_site_manifest_schema_version: 1
+static_site_release_retention: 5
+static_site_archive_max_members: 10000
+static_site_archive_max_expanded_size: 536870912
+static_site_required_entrypoints:
+  - "index.html"
+  - "pl/index.html"
+  - "en/index.html"
+static_site_health_check_address: "127.0.0.1"
+static_site_health_check_port: 80
+static_site_health_check_host: "{{ static_site_domain }}"
+static_site_health_check_timeout: 5
+static_site_health_checks:
+  - path: "/"
+    status: 308
+    location: "/pl/"
+  - path: "/pl/"
+    status: 200
+  - path: "/en/"
+    status: 200
+# ai_generated:end
