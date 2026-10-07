@@ -16,6 +16,8 @@ AI usage should be kept to a minimum and limited primarily to documentation and 
 
 Markdown files created by AI must include `tags: ai_generated` in their metadata. Other AI-generated files should be marked in a similarly appropriate way.
 
+Additionally, all AI contributions will be marked with [GitAI](https://usegitai.com/).
+
 ## Parts of the System
 
 ### Ares VPS
