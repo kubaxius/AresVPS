@@ -1,0 +1,69 @@
+---
+# ai_generated:start
+- name: Validate Pantheon server configuration
+  ansible.builtin.assert:
+    that:
+      - pantheon_server_release_signing_public_keys | length > 0
+
+- name: Install Pantheon server packages
+  ansible.builtin.apt:
+    name: [gnupg, systemd-container]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Inspect the systemd-sysupdate executable
+  ansible.builtin.stat:
+    path: /usr/lib/systemd/systemd-sysupdate
+  register: pantheon_server_sysupdate_executable
+
+- name: Require the Ubuntu systemd-sysupdate executable
+  ansible.builtin.assert:
+    that:
+      - pantheon_server_sysupdate_executable.stat.isreg | default(false)
+      - pantheon_server_sysupdate_executable.stat.executable | default(false)
+    fail_msg: >-
+      systemd-sysupdate is not executable at
+      /usr/lib/systemd/systemd-sysupdate after installing systemd-container.
+
+- name: Create Pantheon server directories
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - /etc/pantheon
+    - /etc/pantheon/sites.d
+    - /usr/local/sbin
+
+- name: Install the Pantheon server CLI
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../components/pantheon_srv/pantheon_srv.py"
+    dest: /usr/local/sbin/pantheon-srv
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Render artifact signing public keys
+  ansible.builtin.template:
+    src: signing-public-keys.asc.j2
+    dest: /etc/systemd/import-pubring.asc
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Rebuild systemd import keyring
+
+- name: Remove obsolete shared release integration
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /usr/local/lib/static-site-release
+    - /usr/local/libexec/static-site-release
+    - /usr/local/libexec/static-site-release-control
+    - /etc/static-site-release
+    - /etc/systemd/system/static-site-update@.service
+  notify: Reload systemd
+# ai_generated:end

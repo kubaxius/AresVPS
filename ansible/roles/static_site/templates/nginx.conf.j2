@@ -3,7 +3,7 @@ server {
     listen 80;
     server_name {{ static_site_domain }};
     absolute_redirect off;
-    root {{ static_site_root }}/current;
+    root /srv/www/{{ static_site_name }}/current;
     location = / { return 308 /pl/; }
     location / { try_files $uri $uri/ =404; }
 }

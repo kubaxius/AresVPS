@@ -1,0 +1,15 @@
+---
+# ai_generated:start
+- name: Update the static site
+  ansible.builtin.command:
+    argv:
+      - /usr/local/sbin/pantheon-srv
+      - site
+      - >-
+        {{ pantheon_site_definition_file
+           | basename
+           | regex_replace('\.yml$', '') }}
+      - update
+  register: pantheon_site_update
+  changed_when: "'Activated ' in pantheon_site_update.stdout"
+# ai_generated:end

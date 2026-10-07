@@ -1,13 +1,4 @@
 ---
 # ai_generated:start
-static_site_name: "bearworks"
-static_site_root: "/srv/www/{{ static_site_name }}"
-static_site_domain: "bearworks.pl"
 static_site_web_group: "www-data"
-static_site_required_entrypoints:
-  - "index.html"
-  - "pl/index.html"
-  - "en/index.html"
-static_site_signing_public_keys: []
-static_site_release_feed_url: "https://github.com/kubaxius/bw-website-2/releases/latest/download"
 # ai_generated:end

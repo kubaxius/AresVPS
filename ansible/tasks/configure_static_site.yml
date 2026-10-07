@@ -1,0 +1,56 @@
+---
+# ai_generated:start
+- name: Derive the static site name
+  ansible.builtin.set_fact:
+    pantheon_site_name: >-
+      {{ pantheon_site_definition_file
+         | basename
+         | regex_replace('\.yml$', '') }}
+
+- name: Validate the static site definition filename and environment
+  ansible.builtin.assert:
+    that:
+      - pantheon_site_name is match('^[a-z0-9][a-z0-9._-]*$')
+      - env_type in ['local', 'prod']
+    fail_msg: >-
+      Static site definition filenames must be safe site names ending in .yml,
+      and env_type must be local or prod.
+
+- name: Load the static site definition
+  ansible.builtin.include_vars:
+    file: "{{ pantheon_site_definition_file }}"
+    name: pantheon_site_definition
+
+- name: Require a static site definition object
+  ansible.builtin.assert:
+    that:
+      - pantheon_site_definition is mapping
+    fail_msg: "{{ pantheon_site_definition_file }} must contain a YAML object."
+
+- name: Validate the static site definition schema
+  ansible.builtin.assert:
+    that:
+      - "'repository' in pantheon_site_definition"
+      - "'domain' in pantheon_site_definition"
+      - >-
+        pantheon_site_definition.keys()
+        | difference(['repository', 'domain', 'required_entrypoints'])
+        | length == 0
+    fail_msg: >-
+      {{ pantheon_site_definition_file }} must define repository and domain;
+      required_entrypoints is optional and no other fields are supported.
+
+- name: Configure the static site
+  ansible.builtin.include_role:
+    name: static_site
+  vars:
+    static_site_name: "{{ pantheon_site_name }}"
+    static_site_repository: "{{ pantheon_site_definition.repository }}"
+    static_site_domain: >-
+      {{ pantheon_site_name ~ '.test'
+         if env_type == 'local'
+         else pantheon_site_definition.domain }}
+    static_site_required_entrypoints: >-
+      {{ pantheon_site_definition.required_entrypoints
+         | default(['index.html']) }}
+# ai_generated:end

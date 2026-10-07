@@ -1,18 +1,17 @@
 #!/usr/bin/python3 -I
 # ai_generated
 
-"""Install and activate signed static-site releases with systemd-sysupdate.
+"""Manage Pantheon services installed on a server.
 
 Run the agent as root with a site-specific configuration file::
 
-    static-site-release --config /etc/static-site-release/SITE.json update
-    static-site-release --config /etc/static-site-release/SITE.json list
-    static-site-release --config /etc/static-site-release/SITE.json \
-        activate RELEASE_ID
+    pantheon-srv site SITE update
+    pantheon-srv site SITE list
+    pantheon-srv site SITE activate RELEASE_ID
 
-Ansible normally invokes ``update`` through ``static-site-update@SITE.service``.
-Operators use ``list`` to inspect retained releases and ``activate`` to switch
-the site atomically to an already installed release.
+Ansible invokes ``update`` after configuring every declared site. Operators use
+``list`` to inspect retained releases and ``activate`` to switch a site
+atomically to an already installed release.
 """
 
 from __future__ import annotations
@@ -32,6 +31,7 @@ from typing import NoReturn, TextIO, cast
 
 
 SITE_ROOT_BASE = Path("/srv/www")
+SITE_CONFIG_ROOT = Path("/etc/pantheon/sites.d")
 SYSUPDATE_PATH = Path("/usr/lib/systemd/systemd-sysupdate")
 RELEASE_ID_RE = re.compile(
     r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-[0-9a-f]{12}$"
@@ -142,8 +142,8 @@ class SiteConfig:
         """Create a strictly validated site configuration.
 
         The schema is closed: callers must provide every supported field and
-        may not add unknown fields. Site roots are restricted to direct
-        children of ``/srv/www``.
+        may not add unknown fields. Filesystem paths must match the locations
+        derived from the site name by Ansible.
 
         Args:
             values: JSON object containing the site configuration.
@@ -166,12 +166,17 @@ class SiteConfig:
             fail("configuration value site_name is not a safe identifier")
 
         site_root = _absolute_path(values["site_root"], "site_root")
-        try:
-            relative_root = site_root.relative_to(SITE_ROOT_BASE)
-        except ValueError:
-            fail(f"configuration value site_root must be beneath {SITE_ROOT_BASE}")
-        if len(relative_root.parts) != 1:
-            fail(f"configuration value site_root must be a direct child of {SITE_ROOT_BASE}")
+        expected_site_root = SITE_ROOT_BASE / site_name
+        if site_root != expected_site_root:
+            fail(f"configuration value site_root must be {expected_site_root}")
+
+        definitions_path = _absolute_path(values["definitions_path"], "definitions_path")
+        expected_definitions_path = Path(f"/etc/sysupdate.{site_name}.d")
+        if definitions_path != expected_definitions_path:
+            fail(
+                "configuration value definitions_path must be "
+                f"{expected_definitions_path}"
+            )
 
         raw_entrypoints = values["required_entrypoints"]
         if not isinstance(raw_entrypoints, Sequence) or isinstance(raw_entrypoints, str):
@@ -186,7 +191,7 @@ class SiteConfig:
         return cls(
             site_name=site_name,
             site_root=site_root,
-            definitions_path=_absolute_path(values["definitions_path"], "definitions_path"),
+            definitions_path=definitions_path,
             required_entrypoints=entrypoints,
         )
 
@@ -567,62 +572,92 @@ class ReleaseAgent:
             fail(f"cannot acquire release lock: {error}")
 
 
-def load_config(path: Path) -> SiteConfig:
-    """Load and validate a site configuration from JSON.
+def validate_site_name(site_name: str) -> str:
+    """Validate a site name before using it to locate configuration.
 
     Args:
-        path: Root-owned JSON configuration file installed by Ansible.
+        site_name: Name supplied through the command line.
+
+    Returns:
+        The unchanged validated site name.
+
+    Raises:
+        ReleaseError: If the name could escape the configuration directory or
+            cannot be used as a Pantheon site identifier.
+    """
+
+    if SITE_NAME_RE.fullmatch(site_name) is None:
+        fail(f"invalid site name: {site_name!r}")
+    return site_name
+
+
+def load_site_config(site_name: str) -> SiteConfig:
+    """Load one named site's Ansible-managed JSON configuration.
+
+    Args:
+        site_name: Valid site name used to select
+            ``/etc/pantheon/sites.d/SITE.json``.
 
     Returns:
         Validated immutable site configuration.
 
     Raises:
-        ReleaseError: If the file cannot be read, is not valid JSON, does not
-            contain an object, or fails schema validation.
+        ReleaseError: If the site name is invalid, the file cannot be read,
+            the JSON is malformed, the schema is invalid, or the stored site
+            name does not match the requested name.
     """
 
+    validated_name = validate_site_name(site_name)
+    path = SITE_CONFIG_ROOT / f"{validated_name}.json"
     try:
         decoded: object = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
-        fail(f"cannot load release-agent configuration: {error}")
+        fail(f"cannot load configuration for site {validated_name!r}: {error}")
     if not isinstance(decoded, dict):
-        fail("release-agent configuration must be a JSON object")
-    return SiteConfig.from_mapping(cast(Mapping[str, object], decoded))
+        fail(f"configuration for site {validated_name!r} must be a JSON object")
+    config = SiteConfig.from_mapping(cast(Mapping[str, object], decoded))
+    if config.site_name != validated_name:
+        fail(f"configuration for site {validated_name!r} contains a different site name")
+    return config
 
 
 def parse_arguments(arguments: Sequence[str]) -> argparse.Namespace:
-    """Parse release-agent command-line arguments.
+    """Parse Pantheon server command-line arguments.
 
     Args:
         arguments: Arguments excluding the executable name.
 
     Returns:
-        Namespace containing the configuration path, command, and optional
-        release ID.
+        Namespace containing the command group, site name, site operation, and
+        optional release ID.
     """
 
     parser = argparse.ArgumentParser(
-        description="Manage signed static-site releases",
+        prog="pantheon-srv",
+        description="Manage services configured on a Pantheon server",
         epilog=(
             "examples:\n"
-            "  static-site-release --config /etc/static-site-release/SITE.json update\n"
-            "  static-site-release --config /etc/static-site-release/SITE.json list\n"
-            "  static-site-release --config /etc/static-site-release/SITE.json "
-            "activate v1.2.3-0123456789ab"
+            "  pantheon-srv site bearworks update\n"
+            "  pantheon-srv site bearworks list\n"
+            "  pantheon-srv site bearworks activate v1.2.3-0123456789ab"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--config", required=True, type=Path)
-    subparsers = parser.add_subparsers(dest="command", required=True)
-    subparsers.add_parser("update")
-    activate = subparsers.add_parser("activate")
+    command_parsers = parser.add_subparsers(dest="command_group", required=True)
+    site = command_parsers.add_parser("site", help="Manage one configured static site")
+    site.add_argument("site_name", metavar="SITE")
+    site_commands = site.add_subparsers(dest="site_command", required=True)
+    site_commands.add_parser("update", help="Install and activate the latest release")
+    site_commands.add_parser("list", help="List installed releases")
+    activate = site_commands.add_parser(
+        "activate", help="Activate an already installed release"
+    )
     activate.add_argument("release_id")
-    subparsers.add_parser("list")
     return parser.parse_args(arguments)
 
 
 def main(arguments: Sequence[str] | None = None) -> int:
-    """Run the release-agent command-line interface.
+    """Run the Pantheon server command-line interface.
 
     Args:
         arguments: Optional explicit arguments for embedding or manual
@@ -635,10 +670,12 @@ def main(arguments: Sequence[str] | None = None) -> int:
 
     parsed = parse_arguments(sys.argv[1:] if arguments is None else arguments)
     try:
-        config = load_config(cast(Path, parsed.config))
+        if cast(str, parsed.command_group) != "site":
+            fail(f"unsupported command group: {parsed.command_group}")
+        config = load_site_config(cast(str, parsed.site_name))
         agent = ReleaseAgent(config)
         agent.execute(
-            cast(str, parsed.command),
+            cast(str, parsed.site_command),
             cast(str | None, getattr(parsed, "release_id", None)),
             sys.stdout,
         )

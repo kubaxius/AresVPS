@@ -21,10 +21,15 @@ VPS/
 │   │       ├── hosts.yaml
 │   │       └── host_vars/ares/vault.yml
 │   ├── roles/
+│   ├── sites/
+│   │   └── bearworks.yml
+│   ├── tasks/
+│   │   ├── configure_static_site.yml
+│   │   └── update_static_site.yml
 │   └── site.yml
 ├── components/
-│   └── static_site_release/
-│       ├── static_site_release.py
+│   └── pantheon_srv/
+│       ├── pantheon_srv.py
 │       └── tests/             # Reserved for post-MVP tests
 ├── infra/local/cloud-init/user-data
 ├── pantheon_systems_cli/
@@ -36,10 +41,10 @@ VPS/
 └── vm/                         # Ignored cloud image storage
 ```
 
-The static-site release agent is a runtime component, not part of the Ansible
-role. Ansible installs the script, its per-site configuration, the sysupdate
-definition, and one systemd update service. The agent owns downloading,
-validating, listing, and atomically activating releases.
+`pantheon-srv` is a runtime component, not part of an Ansible role. The
+`pantheon_server` role installs it once, while each file in `ansible/sites/`
+drives one invocation of the `static_site` role. Ansible configures every site
+and synchronously asks the CLI to update it at the end of the play.
 
 ## Machine identity
 

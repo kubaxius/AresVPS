@@ -1,0 +1,10 @@
+---
+# ai_generated
+argument_specs:
+  main:
+    short_description: Install the Pantheon server-side toolset
+    options:
+      pantheon_server_release_signing_public_keys:
+        type: list
+        elements: str
+        required: true

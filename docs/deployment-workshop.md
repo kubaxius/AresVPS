@@ -2,181 +2,155 @@
 tags: ai_generated
 ---
 
-# BearWorks signed-release MVP
+# Pantheon static-site deployment workshop
 
-The website build is published as a signed GitHub Release. A small release
-agent on each server asks `systemd-sysupdate` to authenticate, download,
-extract, and retain releases. The agent validates the required files and
-atomically switches Nginx to the new release.
+Pantheon deploys public static websites from signed GitHub Releases. Adding a
+website requires one YAML file; Ansible discovers it, configures the host, and
+runs the initial update through `pantheon-srv`.
 
-Ansible installs and configures this mechanism. It does not inspect or modify
-the active release links.
+There is no update timer. An Ansible play checks every configured site, and an
+operator can request updates or switch retained releases explicitly.
 
 ## Release flow
 
 ```text
-signed vMAJOR.MINOR.PATCH tag
-  -> GitHub Actions builds dist/
-  -> CI publishes the archive, SHA256SUMS, and SHA256SUMS.gpg
-  -> an operator or Ansible requests an update
-  -> systemd-sysupdate verifies and extracts the archive
-  -> the release agent validates required entrypoints
-  -> the agent atomically switches current
-  -> Nginx serves the new release without a reload
+ansible/sites/<site>.yml
+  -> Ansible creates the site root, Nginx vhost, and sysupdate definition
+  -> Ansible writes /etc/pantheon/sites.d/<site>.json
+  -> Ansible runs pantheon-srv site <site> update
+  -> systemd-sysupdate verifies and extracts the latest GitHub Release
+  -> pantheon-srv validates required files and atomically switches current
+  -> Nginx serves the selected release without a reload
 ```
 
-The release ID combines the tag and the first twelve lowercase characters of
-the commit SHA:
+## Add a website
 
-```text
-v1.2.3-0123456789ab
+Create `ansible/sites/<site>.yml`. The filename stem is the site name and must
+contain only lowercase letters, digits, dots, underscores, and hyphens.
+
+For example, `ansible/sites/bearworks.yml` contains:
+
+```yaml
+repository: kubaxius/bw-website-2
+domain: bearworks.pl
+required_entrypoints:
+  - index.html
+  - pl/index.html
+  - en/index.html
 ```
 
-The matching GitHub Release contains:
+Only `repository` and `domain` are required. If `required_entrypoints` is
+omitted, it defaults to `index.html`.
+
+Pantheon derives the remaining values:
+
+| Setting | Derived value |
+| --- | --- |
+| Local domain | `<site>.test` |
+| Production domain | Value of `domain` |
+| Site root | `/srv/www/<site>` |
+| Server config | `/etc/pantheon/sites.d/<site>.json` |
+| Sysupdate definitions | `/etc/sysupdate.<site>.d` |
+| GitHub source | `https://github.com/<repository>/releases/latest/download` |
+| Archive pattern | `<site>-@v.tar.gz` |
+
+Apply Ansible. No playbook or inventory edit is needed:
+
+```console
+ansible-playbook -i ansible/inventories/local ansible/site.yml
+```
+
+Ansible configures every YAML file in `ansible/sites/`, applies keyring and
+Nginx handlers, and then synchronously updates every site. A failed download,
+signature check, layout validation, or first installation fails the play.
+
+## Publish compatible releases
+
+Each website repository must be public and publish a full GitHub Release with:
 
 ```text
-bearworks-v1.2.3-0123456789ab.tar.gz
+<site>-v1.2.3-0123456789ab.tar.gz
 SHA256SUMS
 SHA256SUMS.gpg
 ```
 
-Published release assets are immutable. Corrections use a new version.
+The release ID combines a semantic-version tag with the first twelve lowercase
+characters of the commit SHA. The archive must expose every configured
+entrypoint at its root.
 
-## Signing key
-
-Generate a dedicated artifact-signing key on a trusted workstation:
-
-```console
-gpg --quick-generate-key "BearWorks release artifacts" rsa4096 sign 2y
-gpg --armor --export "BearWorks release artifacts" > bearworks-release-public.asc
-gpg --armor --export-secret-keys "BearWorks release artifacts" > bearworks-release-private.asc
-```
-
-Store the private key and passphrase only as protected secrets in the website
-repository. Configure the public key in Pantheon:
+All sites currently use one dedicated artifact-signing key. Configure its
+public half in `ansible/group_vars/all.yml`:
 
 ```yaml
-static_site_signing_public_keys:
+pantheon_server_release_signing_public_keys:
   - |
     -----BEGIN PGP PUBLIC KEY BLOCK-----
     ...
     -----END PGP PUBLIC KEY BLOCK-----
 ```
 
-Multiple public keys may be present temporarily during rotation.
+Keep the private key only in the website release workflow. Sysupdate verifies
+the signed checksum manifest against `/etc/systemd/import-pubring.gpg` before
+the agent activates an archive.
 
-## Artifact requirements
+## Operate a site
 
-The archive must contain these files at its root:
-
-```text
-index.html
-pl/index.html
-en/index.html
-```
-
-Its filename must be `bearworks-<release-id>.tar.gz`. `SHA256SUMS` must contain
-the archive checksum, and `SHA256SUMS.gpg` must be its detached signature.
-The GitHub Release must be a full published release because the server reads
-from `releases/latest/download`.
-
-The default source is:
-
-```yaml
-static_site_release_feed_url: >-
-  https://github.com/kubaxius/bw-website-2/releases/latest/download
-```
-
-## Provision the server
-
-Apply Ansible to the local VM first:
+Install and activate the latest published release:
 
 ```console
-ansible-playbook -i ansible/inventories/local/hosts.yaml ansible/site.yml \
-  --limit ares-local
+sudo pantheon-srv site bearworks update
 ```
 
-The role installs:
-
-- `/usr/local/libexec/static-site-release`;
-- `/etc/static-site-release/bearworks.json`;
-- `/etc/sysupdate.bearworks.d/10-site.conf`;
-- `static-site-update@.service`;
-- the systemd artifact-signing keyring;
-- Nginx rooted at `/srv/www/bearworks/current`.
-
-At the end of every apply, Ansible asynchronously starts
-`static-site-update@bearworks.service`. The play does not wait for the download
-or fail when the update fails. Inspect the service journal for the outcome.
-
-## Operate releases
-
-Request the latest signed release through systemd:
+List retained releases; `*` marks the active one:
 
 ```console
-sudo systemctl start static-site-update@bearworks.service
-sudo journalctl -u static-site-update@bearworks.service
+sudo pantheon-srv site bearworks list
 ```
 
-The same operation can be invoked directly:
+Switch atomically to an installed release:
 
 ```console
-sudo /usr/local/libexec/static-site-release \
-  --config /etc/static-site-release/bearworks.json update
+sudo pantheon-srv site bearworks activate v1.1.0-fedcba987654
 ```
 
-List installed releases; `*` marks the active one:
-
-```console
-sudo /usr/local/libexec/static-site-release \
-  --config /etc/static-site-release/bearworks.json list
-```
-
-Atomically activate an older retained release:
-
-```console
-sudo /usr/local/libexec/static-site-release \
-  --config /etc/static-site-release/bearworks.json \
-  activate v1.1.0-fedcba987654
-```
-
-Nginx follows the `current` symlink per request, so activation does not require
-a reload. A later update check with no newly downloaded release preserves the
-manual selection.
+Nginx serves `/srv/www/<site>/current`, so activation does not require a
+reload. An update that downloads nothing preserves a manually selected older
+release. A genuinely new release becomes active after it passes validation.
 
 ## Retention and failures
 
-Sysupdate retains four release directories: the active release and three
-rollback choices. Before an update, the agent points sysupdate’s internal
-`staged` link at the active release so retention cannot prune it.
+Sysupdate retains four release directories: the active release and three older
+choices. Before updating, `pantheon-srv` protects the current release through
+sysupdate's `staged` link.
 
-Signature verification occurs before extraction. After extraction, the agent
-requires every configured entrypoint to be a regular file reached without
-crossing symlinks. A signature failure, malformed release, missing entrypoint,
-or unexpected sysupdate result leaves `current` unchanged.
+These failures leave `current` unchanged:
 
-A downloaded release that fails layout validation remains installed but
-inactive until normal retention pruning removes it. Publish a corrected higher
-version rather than replacing existing GitHub Release assets.
+- GitHub or sysupdate failure;
+- missing or invalid checksum signature;
+- unexpected release installation state;
+- malformed release identifier;
+- missing, symlinked, or non-file required entrypoint.
+
+A downloaded release that fails entrypoint validation remains inactive until
+normal retention removes it. Publish a corrected higher version rather than
+replacing immutable GitHub Release assets.
 
 ## Local acceptance pass
 
-Exercise the MVP on `ares-local` before production:
+Before production:
 
-1. Apply Ansible and confirm the asynchronous update activates the latest
-   signed release.
-2. Run `list` and confirm the active marker.
-3. Activate an older release and confirm Nginx serves it without reloading.
-4. Run `update` with no newer release and confirm the manual selection remains.
-5. Publish successive releases and confirm only four are retained.
-6. Confirm an invalid signature and a missing required entrypoint leave
-   `current` unchanged.
+1. Apply Ansible and confirm BearWorks retains its existing release state.
+2. Add another site YAML file backed by a public test repository.
+3. Reapply Ansible and confirm both sites update without editing `site.yml`.
+4. Reapply with no new releases and confirm the play reports no release change.
+5. Use `list` and `activate` independently for both sites.
+6. Confirm an invalid signature or missing entrypoint fails without changing
+   the active release.
 
 Useful diagnostics:
 
 ```console
-systemctl status static-site-update@bearworks.service
-journalctl -u static-site-update@bearworks.service
+sudo pantheon-srv site bearworks list
 systemd-sysupdate --definitions=/etc/sysupdate.bearworks.d list
 readlink /srv/www/bearworks/current
 readlink /srv/www/bearworks/staged

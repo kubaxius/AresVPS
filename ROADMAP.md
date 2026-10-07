@@ -84,13 +84,14 @@ VM-first roadmap for deploying the BearWorks Astro website. GitHub Releases is t
   - `/srv/www/bearworks/staged`
 - [x] Give Nginx read access to deployed releases
 - [x] Configure `systemd-sysupdate` to pull signed releases from GitHub Releases
-- [x] Install a standalone release agent outside the Ansible role that:
-  - serializes update and activation operations
+- [x] Install the standalone `pantheon-srv` tool outside the Ansible roles to:
+  - serialize update and activation operations
   - verifies the required Polish and English entrypoints
   - atomically replaces the `current` symlink
   - exposes only `update`, `activate`, and `list`
-- [x] Let Ansible install and configure the agent without managing release state
-- [x] Start one asynchronous update service after each Ansible apply
+- [x] Discover websites from one YAML definition per site
+- [x] Let Ansible install the shared toolset and configure each site without managing release state
+- [x] Synchronously update every configured site after each Ansible apply
 - [x] Retain the active release and three older releases for manual activation
 - [x] **Gate:** do not proceed until invalid or unsigned releases cannot replace the active release
 
@@ -143,7 +144,7 @@ VM-first roadmap for deploying the BearWorks Astro website. GitHub Releases is t
 - [ ] Generate and sign `SHA256SUMS` with the protected artifact-signing key
 - [ ] Publish the archive, `SHA256SUMS`, and `SHA256SUMS.gpg` together as one GitHub Release
 - [ ] Confirm `releases/latest/download` exposes all three assets
-- [ ] Let the VM pull and activate the release through the agent
+- [ ] Let the VM pull and activate the release through `pantheon-srv`
 - [ ] Confirm a failed verification does not activate or delete the previous release
 - [ ] Confirm CI has no VM or production credentials
 - [ ] **Gate:** do not provision production until the VM reliably consumes signed GitHub Releases

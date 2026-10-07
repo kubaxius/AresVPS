@@ -2,7 +2,7 @@
 # ansible/group_vars/all.yml
 ansible_user: ansible
 server_timezone: Etc/UTC
-static_site_signing_public_keys:
+pantheon_server_release_signing_public_keys:
   - |
     -----BEGIN PGP PUBLIC KEY BLOCK-----
 

@@ -8,4 +8,33 @@
     - access
     - firewall
     - nginx
-    - static_site
+    - pantheon_server
+
+  tasks:
+    # ai_generated:start
+    - name: Discover static site definitions
+      ansible.builtin.set_fact:
+        pantheon_site_definition_files: >-
+          {{ query(
+               'ansible.builtin.fileglob',
+               playbook_dir ~ '/sites/*.yml'
+             ) | sort }}
+
+    - name: Configure static sites
+      ansible.builtin.include_tasks: tasks/configure_static_site.yml
+      loop: "{{ pantheon_site_definition_files }}"
+      loop_control:
+        loop_var: pantheon_site_definition_file
+        label: "{{ pantheon_site_definition_file | basename }}"
+
+    - name: Apply static site configuration before updates
+      ansible.builtin.meta: flush_handlers
+
+    - name: Update configured static sites sequentially
+      ansible.builtin.include_tasks: tasks/update_static_site.yml
+      loop: "{{ pantheon_site_definition_files }}"
+      loop_control:
+        loop_var: pantheon_site_definition_file
+        label: "{{ pantheon_site_definition_file | basename }}"
+      when: not ansible_check_mode
+      # ai_generated:end

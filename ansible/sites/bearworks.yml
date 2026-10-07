@@ -1,0 +1,8 @@
+---
+# ai_generated
+repository: kubaxius/bw-website-2
+domain: bearworks.pl
+required_entrypoints:
+  - index.html
+  - pl/index.html
+  - en/index.html

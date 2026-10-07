@@ -2,12 +2,13 @@
 # ai_generated
 argument_specs:
   main:
-    short_description: Install and configure the static-site release agent
+    short_description: Configure one static site for pantheon-srv
     options:
       static_site_name: {type: str, required: true}
-      static_site_root: {type: path, required: true}
+      static_site_repository: {type: str, required: true}
       static_site_domain: {type: str, required: true}
       static_site_web_group: {type: str, required: true}
-      static_site_required_entrypoints: {type: list, elements: str, required: true}
-      static_site_signing_public_keys: {type: list, elements: str, required: true}
-      static_site_release_feed_url: {type: str, required: true}
+      static_site_required_entrypoints:
+        type: list
+        elements: str
+        required: true

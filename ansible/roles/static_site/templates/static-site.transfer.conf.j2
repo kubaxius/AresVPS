@@ -4,12 +4,12 @@ Verify=yes
 
 [Source]
 Type=url-tar
-Path={{ static_site_release_feed_url }}
+Path=https://github.com/{{ static_site_repository }}/releases/latest/download
 MatchPattern={{ static_site_name }}-@v.tar.gz
 
 [Target]
 Type=directory
-Path={{ static_site_root }}
+Path=/srv/www/{{ static_site_name }}
 MatchPattern=releases/@v
 CurrentSymlink=staged
 InstancesMax=4
