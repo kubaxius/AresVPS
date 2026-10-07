@@ -4,7 +4,7 @@ tags: ai_generated
 
 # VPS Infrastructure TODO
 
-VM-first roadmap for deploying the BearWorks Astro website. Complete each phase and its gate before moving to the next one. Build and deployment mechanics come before Tailscale; production provisioning and DNS migration come only after the complete workflow succeeds against the local VM.
+VM-first roadmap for deploying the BearWorks Astro website. GitHub Releases is the signed artifact source; servers pull releases through a small host-side agent, without CI access to the hosts.
 
 ## Completed foundation
 
@@ -60,44 +60,39 @@ VM-first roadmap for deploying the BearWorks Astro website. Complete each phase 
 
 ## Phase 2 — Prepare the Astro project for self-hosting
 
-- [ ] Pin the Node major version used locally and in CI
-- [ ] Add explicit scripts for `astro check` and the production build
-- [ ] Replace the Netlify contact form with localized “temporarily unavailable” text and the existing email link
-- [ ] Remove the Netlify form handler and form-specific attributes from the production output
-- [ ] Keep `/pl/` and `/en/` statically generated through `getStaticPaths()`
-- [ ] Keep `/` redirecting to `/pl/`
-- [ ] Run `npm ci`, type checking, and the production build from a clean checkout
-- [ ] Verify that `dist/` contains at least:
+- [x] Pin the Node major version used locally and in CI
+- [x] Add explicit scripts for `astro check` and the production build
+- [x] Replace the Netlify contact form with localized “temporarily unavailable” text and the existing email link
+- [x] Remove the Netlify form handler and form-specific attributes from the production output
+- [x] Keep `/pl/` and `/en/` statically generated through `getStaticPaths()`
+- [x] Keep `/` redirecting to `/pl/`
+- [x] Run `npm ci`, type checking, and the production build from a clean checkout
+- [x] Verify that `dist/` contains at least:
   - `index.html`
   - `pl/index.html`
   - `en/index.html`
   - the expected localized nested pages
   - hashed `/_astro/` assets
-- [ ] **Gate:** do not proceed until the site builds reproducibly without Netlify or a running Astro server
+- [x] **Gate:** do not proceed until the site builds reproducibly without Netlify or a running Astro server
 
-## Phase 3 — Build the versioned static-site deployment role
+## Phase 3 — Build the static-site release MVP
 
-- [ ] Add a reusable `static_site` Ansible role rather than an Astro-specific role
-- [ ] Create the restricted `bearworks-deploy` account without sudo access
-- [ ] Create the deployment paths:
-  - `/srv/www/bearworks/incoming`
+- [x] Add a reusable `static_site` Ansible role rather than an Astro-specific role
+- [x] Create the deployment paths:
   - `/srv/www/bearworks/releases`
   - `/srv/www/bearworks/current`
-- [ ] Give the deploy account write access only to the BearWorks deployment tree
-- [ ] Give Nginx read access to deployed releases
-- [ ] Install a deployment helper that:
-  - accepts a release ID, archive, and SHA-256 checksum
-  - permits release IDs matching `<semver-tag>-<short-sha>`
-  - rejects duplicate releases
-  - rejects invalid checksums and unsafe archives
-  - extracts into a temporary directory
+  - `/srv/www/bearworks/staged`
+- [x] Give Nginx read access to deployed releases
+- [x] Configure `systemd-sysupdate` to pull signed releases from GitHub Releases
+- [x] Install a standalone release agent outside the Ansible role that:
+  - serializes update and activation operations
   - verifies the required Polish and English entrypoints
-  - renames the completed directory into `releases/`
   - atomically replaces the `current` symlink
-  - retains the five newest completed releases without deleting the active release
-- [ ] Install a separate activation command for rolling back to a retained release
-- [ ] Test the helper manually against the VM using an artifact built on the workstation
-- [ ] **Gate:** do not proceed until an interrupted or invalid upload cannot replace the active release
+  - exposes only `update`, `activate`, and `list`
+- [x] Let Ansible install and configure the agent without managing release state
+- [x] Start one asynchronous update service after each Ansible apply
+- [x] Retain the active release and three older releases for manual activation
+- [x] **Gate:** do not proceed until invalid or unsigned releases cannot replace the active release
 
 ## Phase 4 — Configure and test Nginx locally
 
@@ -120,43 +115,38 @@ VM-first roadmap for deploying the BearWorks Astro website. Complete each phase 
 - [ ] Deploy release A and verify its content
 - [ ] Deploy release B and verify the symlink switches atomically
 - [ ] Roll back to release A without rebuilding it
-- [ ] Attempt a duplicate release and confirm it is rejected
-- [ ] Attempt an archive with a bad checksum and confirm the active site remains unchanged
+- [ ] Confirm an update check with no new release leaves a manual activation unchanged
+- [ ] Publish an archive with a bad checksum in a test repository and confirm the active site remains unchanged
 - [ ] Attempt an archive missing a locale entrypoint and confirm it is rejected
 - [ ] Deploy enough releases to verify retention pruning
-- [ ] Run Ansible again and confirm it does not overwrite or reactivate a release
+- [ ] Run Ansible again and confirm a no-op update does not overwrite or reactivate a release
 - [ ] Destroy and recreate the VM, then repeat the complete deployment test
 - [ ] **Gate:** do not introduce CI or production until the entire release lifecycle passes on a freshly recreated VM
 
-## Phase 6 — Add Tailscale after local deployment works
+## Phase 6 — Add optional Tailscale administration
 
 - [ ] Add a Tailscale Ansible role
 - [ ] Store Tailscale enrollment secrets in Ansible Vault
 - [ ] Keep Tailscale disabled by default in the local inventory until this phase
 - [ ] Enroll the test VM as `tag:bearworks-vm`
-- [ ] Create a GitHub workload identity for the `vm-test` environment
-- [ ] Tag ephemeral VM-test runners as `tag:bearworks-ci-vm`
-- [ ] Add a tailnet grant allowing `tag:bearworks-ci-vm` to reach only `tag:bearworks-vm` on TCP 22
-- [ ] Keep the VM’s ordinary SSH key authentication; use Tailscale for private connectivity rather than Unix-account authentication
+- [ ] Keep Tailscale independent from the website release pipeline
+- [ ] Keep the VM’s ordinary SSH key authentication for administration
 - [ ] Confirm the workstation can reach the VM over MagicDNS
-- [ ] Confirm the CI tag cannot reach unrelated tailnet devices or VM ports
 - [ ] Keep the public production SSH policy unchanged during this phase
 
-## Phase 7 — Build and test GitHub Actions against the VM
+## Phase 7 — Publish signed GitHub Releases
 
 - [ ] Add a normal CI workflow for pushes and pull requests that runs `npm ci`, `astro check`, and `npm run build` without deployment credentials
-- [ ] Add a manually triggered VM deployment workflow using the protected `vm-test` environment
 - [ ] Pin every third-party GitHub Action to a full commit SHA
-- [ ] Grant the deployment job only `contents: read` and `id-token: write`
-- [ ] Join Tailscale using the VM-test workload identity and wait for connectivity to the VM
+- [ ] Grant the release job only `contents: write`
 - [ ] Build and package the selected commit in GitHub Actions
-- [ ] Upload the artifact through Tailscale using the dedicated deploy SSH key
-- [ ] Invoke the same deployment helper already tested manually
-- [ ] Run post-deployment checks through SSH against Nginx on `127.0.0.1` with `Host: bearworks.pl`
+- [ ] Generate and sign `SHA256SUMS` with the protected artifact-signing key
+- [ ] Publish the archive, `SHA256SUMS`, and `SHA256SUMS.gpg` together as one GitHub Release
+- [ ] Confirm `releases/latest/download` exposes all three assets
+- [ ] Let the VM pull and activate the release through the agent
 - [ ] Confirm a failed verification does not activate or delete the previous release
-- [ ] Repeat deployment and rollback tests through GitHub Actions
-- [ ] Confirm CI validation jobs do not receive deployment or production credentials
-- [ ] **Gate:** do not provision production until GitHub-hosted runners can reliably deploy to the local VM through Tailscale
+- [ ] Confirm CI has no VM or production credentials
+- [ ] **Gate:** do not provision production until the VM reliably consumes signed GitHub Releases
 
 ## Phase 8 — Provision and validate the production VPS
 
@@ -180,27 +170,23 @@ VM-first roadmap for deploying the BearWorks Astro website. Complete each phase 
 - [ ] Run and review an OpenTofu plan before applying
 - [ ] Provision the VPS and create the production Ansible inventory from OpenTofu outputs
 - [ ] Apply the same Ansible roles already exercised on the VM
-- [ ] Enroll the VPS as `tag:bearworks-production`
-- [ ] Create a separate GitHub workload identity bound to the protected `production` environment
-- [ ] Tag production deployment runners as `tag:bearworks-ci-production`
-- [ ] Allow that tag to reach only `tag:bearworks-production` on TCP 22
-- [ ] Use a separate production deploy SSH key
-- [ ] Deploy a release to the VPS before changing public DNS
+- [ ] Optionally enroll the VPS in Tailscale for administration
+- [ ] Bootstrap the latest signed release during the first Ansible run
 - [ ] Validate it over SSH with local Nginx health checks and, where practical, through the public IP with an explicit `Host` header
 - [ ] Verify application ports other than intended public HTTP and HTTPS are not publicly reachable
 - [ ] Verify break-glass SSH is available only from configured CIDRs
 - [ ] Reboot the VPS and confirm the selected release remains active
-- [ ] **Gate:** do not change DNS until Ansible, deployment, rollback, reboot recovery, and Tailscale CI access all pass in production
+- [ ] **Gate:** do not change DNS until Ansible, signed update, rollback, and reboot recovery all pass in production
 
-## Phase 9 — Enable tag-only production releases
+## Phase 9 — Enable tag-only published releases
 
 - [ ] Add a production workflow triggered only by tags matching `vMAJOR.MINOR.PATCH`
 - [ ] Verify that the tagged commit is reachable from `master`
 - [ ] Refuse to reuse or overwrite an existing release identifier
-- [ ] Use the protected `production` GitHub environment and production-only Tailscale identity
-- [ ] Build, validate, package, checksum, upload, activate, and health-check the release
+- [ ] Build, validate, package, checksum, sign, and publish the release
+- [ ] Confirm servers independently download and validate the published version
 - [ ] Ensure CI cannot run infrastructure applies
-- [ ] Create the first production tag only after the untagged/manual VPS validation succeeds
+- [ ] Create the first production tag before fresh-server bootstrap
 - [ ] Document the rollback command and test it before DNS migration
 
 ## Phase 10 — Migrate DNS and enable trusted TLS
@@ -257,6 +243,7 @@ VM-first roadmap for deploying the BearWorks Astro website. Complete each phase 
 
 - [ ] The VM can be destroyed, recreated, configured, deployed, upgraded, and rolled back without manual server edits
 - [ ] The exact artifact activation mechanism tested on the VM is used in production
-- [ ] GitHub Actions reaches the VM and VPS through separately scoped Tailscale identities
+- [ ] GitHub Actions has no SSH, Tailscale, VM, or VPS deployment credentials
+- [ ] The VM and VPS authenticate the same GitHub Release with the same public signing key
 - [ ] The Astro website runs as static Nginx content with no Astro or Node process on the server
 - [ ] Production DNS changes only after the complete deployment path passes on both the VM and the unadvertised VPS

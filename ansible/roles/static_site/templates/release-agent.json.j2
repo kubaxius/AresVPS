@@ -1,0 +1,7 @@
+{# ai_generated #}
+{
+  "site_name": {{ static_site_name | to_json }},
+  "site_root": {{ static_site_root | to_json }},
+  "definitions_path": {{ ("/etc/sysupdate." ~ static_site_name ~ ".d") | to_json }},
+  "required_entrypoints": {{ static_site_required_entrypoints | to_json }}
+}

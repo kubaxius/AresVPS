@@ -3,31 +3,11 @@
 static_site_name: "bearworks"
 static_site_root: "/srv/www/{{ static_site_name }}"
 static_site_domain: "bearworks.pl"
-static_site_user_name: "bearworks-deploy"
-static_site_user_gecos: "BearWorks Website Deployer"
 static_site_web_group: "www-data"
-static_site_user_groups:
-  - "{{ static_site_user_name }}"
-  - "website_deployers"
-  - "{{ static_site_web_group }}"
-static_site_release_retention: 5
 static_site_required_entrypoints:
   - "index.html"
   - "pl/index.html"
   - "en/index.html"
-static_site_feed_port: 18080
-static_site_staging_health_port: 18081
-static_site_health_check_address: "127.0.0.1"
-static_site_health_check_port: 80
-static_site_health_check_host: "{{ static_site_domain }}"
-static_site_health_check_timeout: 5
-static_site_health_checks:
-  - {path: "/", status: 308, location: "/pl/"}
-  - {path: "/pl/", status: 200}
-  - {path: "/en/", status: 200}
 static_site_signing_public_keys: []
-static_site_sysupdate_definitions_path: "/etc/sysupdate.{{ static_site_name }}.d"
-static_site_unit_name_prefix: "static-site"
-static_site_controller_path: "/usr/local/libexec/static-site-release-control"
-static_site_controller_config_path: "/etc/static-site-release/{{ static_site_name }}.json"
+static_site_release_feed_url: "https://github.com/kubaxius/bw-website-2/releases/latest/download"
 # ai_generated:end

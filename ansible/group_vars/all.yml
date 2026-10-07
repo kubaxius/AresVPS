@@ -2,3 +2,34 @@
 # ansible/group_vars/all.yml
 ansible_user: ansible
 server_timezone: Etc/UTC
+static_site_signing_public_keys:
+  - |
+    -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+    mQINBGquBqMBEACvRQgkbQHtXPjIk2W5BJA2DwYSYmFpPjS0xy4igIayiiOiaSbm
+    7O0pAZXqf1koVHdIAdQSu0eXs1tYNoXXPz99CPoKqNKi9OMJAfqwKMz2li5p6LcP
+    yEcRKNzqR+NMC5E1X/+uYWBEznporZQgPzRwO8cEViG6jZviLLQuvxL6EPr1rLhR
+    oyvk2xQSrY8nTuCcx4kVujIwDj3Ui49Qb+F3l4BrOw7shEWRA0vPU6ySS+p6UQAn
+    X5yDCloGJA468RX0De0TOeXwHwO2i3MgaTy/MhIMXVks6gT1d1NT7tGv/atXPUyD
+    k9Uu4TwjQnJaFkvr6mwlY+IuaOHqOp7x5UBSWk08myngOsZMV2xlxRxicuyab+YT
+    a8DnsucQ/rwQdYzLGKFtHaVUAt+nL/07ieJl+k1ZIA58DClmX5LtTJMeqHUAopC/
+    tNgdo7PXS/qtDzQ/rV+Pwt8RxOVonElzo9YcakJoIzYaPgCsHY5jcGfryMEgGefu
+    6s0XpjcdP6oitNhGHN1/5dJklzr3zL5pQ4eaXENq8w5XyZSTp/wmyQstHWAOpirG
+    pAJJH+649pn5kXC7uPxbjeXccLjv2YS495zm8Sbcz1iUq+urNqqaOoP5vDeLrwCA
+    iEcnYuNylC4JmAAde0Dbwn7N41Dsld2vlFIViGSxRaP61rybMSauwNAanQARAQAB
+    tBtCZWFyV29ya3MgcmVsZWFzZSBhcnRpZmFjdHOJAlQEEwEKAD4WIQQm0eWIJA6i
+    jLwrlwdJMhiE93WGbgUCaq4GowIbAwUJA8JnAAULCQgHAgYVCgkICwIEFgIDAQIe
+    AQIXgAAKCRBJMhiE93WGboLtEACnoU3PxKjBQ4A8AjBBsApcsEkFzieHgmDYwdGj
+    ECbJsdyngHn+uRmcUufREEYCpvbN0f1LNtc2ThXK4cNXzzMj3upmMajBSnneKxEI
+    QAQ/AVNSeR8c4WvGthjqHl46uh6GFSZ6u3iYY3W0pZ+1PPTzCSthNidGgCyH+fui
+    8hBp63GdU/gJm2krILKsyKX+rGkPZYLXxG0JNLx5r3X8bmjgt9ANQDs9iaILXGQH
+    xBUEfN9RNHD2WAOOkKYQH7Aiwk3diFVyDZyqgbngrvoa0FjEP9E/zyfUMbaIu2+5
+    FlEvpRrYT1DBlfJbin2FxSDvDIWXdMzTT5XqOVcbOwMPkpkS1DmOSgd04kLPc2BL
+    YkbrwnHhbHD9V1pl9THnusfupOp3WlzqBV0x/29L53qzaDEYQBeuQQjrdi1J/N2e
+    jYYTycCoq+Kxxrn/Lpm7u5nkAXG3APTEt33bWAkLBepMBIuV7ie41HH81txg/tNe
+    fJCt6+Ne3BhjLuLOrrfT3L5sEvZx9iKHLCV/7PKsbWWcZqR1ndtpYMi1lmv2klZ4
+    D7at102+W8vppOo5dCXDZGKEPxOLB0yRUi2qSdgrSX4pYOPTRpBd1PrPn+6KYIPZ
+    X2MZ2pZjMxa+Hb081Oij4qNja/OJyhIppD5FOKM93iosufFOp6f9auHuvp7IEvjk
+    nQXezA==
+    =hfWw
+    -----END PGP PUBLIC KEY BLOCK-----

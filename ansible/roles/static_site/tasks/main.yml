@@ -1,54 +1,40 @@
 ---
-# ai_generated:start
 - name: Validate static site configuration
   ansible.builtin.assert:
     that:
       - static_site_name is match('^[a-z0-9][a-z0-9._-]*$')
       - static_site_root is match('^/srv/www/[a-z0-9][a-z0-9._-]*$')
       - static_site_domain | length > 0
-      - static_site_user_name is match('^[a-z_][a-z0-9_-]*[$]?$')
       - static_site_web_group is match('^[a-z_][a-z0-9_-]*[$]?$')
-      - static_site_release_retention | int >= 1
       - static_site_required_entrypoints | length > 0
-      - static_site_feed_port | int > 0
-      - static_site_feed_port | int <= 65535
-      - static_site_staging_health_port | int > 0
-      - static_site_staging_health_port | int <= 65535
-      - (static_site_feed_port | int) != (static_site_staging_health_port | int)
-      - static_site_health_check_port | int > 0
-      - static_site_health_check_port | int <= 65535
-      - static_site_health_check_timeout | int > 0
-      - static_site_health_checks | length > 0
       - static_site_signing_public_keys | length > 0
-      - static_site_sysupdate_definitions_path is match('^/etc/sysupdate\.[a-z0-9][a-z0-9._-]*\.d$')
-      - static_site_unit_name_prefix is match('^[a-z0-9][a-z0-9-]*$')
-      - static_site_controller_path is match('^/usr/local/libexec/[A-Za-z0-9._-]+$')
-      - static_site_controller_config_path is match('^/etc/static-site-release/[a-z0-9][a-z0-9._-]*\.json$')
+      - static_site_release_feed_url is match('^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/latest/download/?$')
 
 - name: Install static site release packages
   ansible.builtin.apt:
-    name: [curl, gnupg, polkitd, systemd-container]
+    name: [gnupg, systemd-container]
     state: present
     update_cache: true
     cache_valid_time: 3600
+
+- name: Inspect the systemd-sysupdate executable
+  ansible.builtin.stat:
+    path: /usr/lib/systemd/systemd-sysupdate
+  register: static_site_sysupdate_executable
+
+- name: Require the Ubuntu systemd-sysupdate executable
+  ansible.builtin.assert:
+    that:
+      - static_site_sysupdate_executable.stat.isreg | default(false)
+      - static_site_sysupdate_executable.stat.executable | default(false)
+    fail_msg: >-
+      systemd-sysupdate is not executable at
+      /usr/lib/systemd/systemd-sysupdate after installing systemd-container.
 
 - name: Create web server group
   ansible.builtin.group:
     name: "{{ static_site_web_group }}"
     state: present
-
-- name: Create static site user groups
-  ansible.builtin.group:
-    name: "{{ item }}"
-    state: present
-  loop: "{{ static_site_user_groups }}"
-
-- name: Create static site deploy user
-  ansible.builtin.user:
-    name: "{{ static_site_user_name }}"
-    comment: "{{ static_site_user_gecos }}"
-    groups: "{{ static_site_user_groups | join(',') }}"
-    append: true
 
 - name: Create static site directories
   ansible.builtin.file:
@@ -58,13 +44,13 @@
     group: "{{ item.group }}"
     mode: "{{ item.mode }}"
   loop:
+    - path: /srv/www
+      owner: root
+      group: root
+      mode: "0755"
+
     - path: "{{ static_site_root }}"
       owner: root
-      group: "{{ static_site_web_group }}"
-      mode: "0750"
-
-    - path: "{{ static_site_root }}/incoming"
-      owner: "{{ static_site_user_name }}"
       group: "{{ static_site_web_group }}"
       mode: "0750"
 
@@ -73,28 +59,33 @@
       group: "{{ static_site_web_group }}"
       mode: "0750"
 
-    - path: "{{ static_site_sysupdate_definitions_path }}"
+    - path: "/etc/sysupdate.{{ static_site_name }}.d"
       owner: root
       group: root
       mode: "0755"
 
-    - path: "{{ static_site_controller_config_path | dirname }}"
+    - path: /etc/static-site-release
       owner: root
       group: root
       mode: "0755"
 
-- name: Install shared static site release controller
+    - path: /usr/local/libexec
+      owner: root
+      group: root
+      mode: "0755"
+
+- name: Install the static site release agent
   ansible.builtin.copy:
-    src: static_site_release_control.py
-    dest: "{{ static_site_controller_path }}"
+    src: "{{ playbook_dir }}/../components/static_site_release/static_site_release.py"
+    dest: /usr/local/libexec/static-site-release
     owner: root
     group: root
     mode: "0755"
 
-- name: Install site controller configuration
+- name: Install site release-agent configuration
   ansible.builtin.template:
-    src: controller.json.j2
-    dest: "{{ static_site_controller_config_path }}"
+    src: release-agent.json.j2
+    dest: "/etc/static-site-release/{{ static_site_name }}.json"
     owner: root
     group: root
     mode: "0644"
@@ -102,7 +93,7 @@
 - name: Install site sysupdate transfer definition
   ansible.builtin.template:
     src: static-site.transfer.conf.j2
-    dest: "{{ static_site_sysupdate_definitions_path }}/10-site.conf"
+    dest: "/etc/sysupdate.{{ static_site_name }}.d/10-site.conf"
     owner: root
     group: root
     mode: "0644"
@@ -116,53 +107,41 @@
     mode: "0644"
   notify: Rebuild systemd import keyring
 
-- name: Install static site service templates
+- name: Install the generic static site update service
   ansible.builtin.template:
-    src: static-site-release.service.j2
-    dest: "/etc/systemd/system/{{ static_site_unit_name_prefix }}-{{ item }}-{{ static_site_name }}@.service"
+    src: static-site-update.service.j2
+    dest: /etc/systemd/system/static-site-update@.service
     owner: root
     group: root
     mode: "0644"
-  vars:
-    operation: "{{ item }}"
-  loop: [deploy, rollback]
   notify: Reload systemd
 
-- name: Install deploy-account Polkit rule
-  ansible.builtin.template:
-    src: polkit.rules.j2
-    dest: "/etc/polkit-1/rules.d/20-{{ static_site_unit_name_prefix }}-{{ static_site_name }}.rules"
-    owner: root
-    group: root
-    mode: "0644"
-
-- name: Inspect current release link for migration
-  ansible.builtin.stat:
-    path: "{{ static_site_root }}/current"
-    follow: false
-  register: static_site_current_link
-
-- name: Initialize staged from a valid current release
-  ansible.builtin.file:
-    state: link
-    path: "{{ static_site_root }}/staged"
-    src: "{{ static_site_current_link.stat.lnk_source }}"
-    owner: root
-    group: root
-    force: false
-  when:
-    - static_site_current_link.stat.islnk | default(false)
-    - static_site_current_link.stat.lnk_source is match('^releases/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-[0-9a-f]{12}$')
-
-- name: Remove legacy release helper and sudoers access
+- name: Remove obsolete release integration
   ansible.builtin.file:
     path: "{{ item }}"
     state: absent
   loop:
     - /usr/local/lib/static-site-release
+    - /usr/local/libexec/static-site-release-control
     - "/usr/local/sbin/{{ static_site_name }}-release"
-    - "/etc/sudoers.d/{{ static_site_user_name }}"
+    - "/etc/sudoers.d/{{ static_site_name }}-deploy"
+    - "/etc/polkit-1/rules.d/20-static-site-{{ static_site_name }}.rules"
+    - "/etc/systemd/system/static-site-deploy-{{ static_site_name }}@.service"
+    - "/etc/systemd/system/static-site-rollback-{{ static_site_name }}@.service"
+    - "/etc/systemd/system/static-site-update-{{ static_site_name }}.service"
+    - "/etc/systemd/system/static-site-update-{{ static_site_name }}.timer"
+    - "/etc/systemd/system/timers.target.wants/static-site-update-{{ static_site_name }}.timer"
+  notify: Reload systemd
 
-- name: Configure static site Nginx listeners
+- name: Configure static site Nginx
   ansible.builtin.import_tasks: nginx.yml
-# ai_generated:end
+
+- name: Apply static site configuration before requesting an update
+  ansible.builtin.meta: flush_handlers
+
+- name: Request a static site release update
+  ansible.builtin.systemd_service:
+    name: "static-site-update@{{ static_site_name }}.service"
+    state: started
+    no_block: true
+  when: not ansible_check_mode

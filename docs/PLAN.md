@@ -1,5 +1,11 @@
 # Replace the Custom Release Engine with `systemd-sysupdate`
 
+<!-- ai_generated:start -->
+> Historical experiment: commit `ccf851e` implemented this localhost-feed,
+> SSH-push design. The active implementation now pulls signed assets directly
+> from GitHub Releases; see `deployment-workshop.md`.
+<!-- ai_generated:end -->
+
 ## Summary
 
 Use Ubuntu 24.04’s `systemd-sysupdate` to verify, extract, retain, and stage static-site releases. Preserve the existing Tailscale/SSH upload path by exposing the upload directory through a localhost-only Nginx feed. A small typed Python controller will coordinate locking, entrypoint checks, health checks, atomic promotion, and rollback; Polkit-authorized systemd units will be the privileged interface.
