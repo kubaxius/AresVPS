@@ -21,21 +21,15 @@ These instructions apply to the entire repository.
 - Never run destructive infrastructure commands merely to verify a change.
 - Do not add dependencies without explaining why they are necessary.
 
-## File and code generation
+## AI attribution
 
-- Mark content only when the AI creates it from scratch. Do not add an
-  `ai_generated` marker when modifying, fixing, refactoring, or completing a
-  file, function, or content span originally written by the user.
-- For an entirely AI-created file that supports metadata (such as Markdown
-  with front matter), add `ai_generated` to its tags.
-- For an entirely AI-created file that does not support metadata, add an
-  `ai_generated` comment near the top, using the file's native comment syntax.
-- In an existing file, wrap every entirely AI-created function or contiguous
-  span of content in an `ai_generated` block using the file's native comment
-  syntax. Use `ai_generated:start` before the generated content and
-  `ai_generated:end` after it.
-- Do not add nested or redundant block markers inside a file that is already
-  marked as entirely AI-generated.
+- Use Git AI to track new AI contributions; ensure its agent integration is
+  installed and active before working (`git ai install-hooks`, then restart the
+  agent). Check working attribution with `git ai status`.
+- Do not add new inline AI attribution comments or metadata tags. Existing
+  `ai_generated` comments and tags are legacy markers; leave them in place.
+  They do not create retroactive Git AI attribution for previously committed
+  content.
 
 ## Verification
 

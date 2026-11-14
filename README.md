@@ -14,9 +14,9 @@ Learning server automation and web hosting by setting up a VPS for my website, w
 
 AI usage should be kept to a minimum and limited primarily to documentation and learning support. All code should be written by me, by hand.
 
-Markdown files created by AI must include `tags: ai_generated` in their metadata. Other AI-generated files should be marked in a similarly appropriate way.
+Track new AI contributions with [Git AI](https://usegitai.com/), which records line-level attribution in Git Notes instead of source comments. Install Git AI and run `git ai install-hooks`, then restart your coding agent to activate its integration. Use `git ai status` to inspect working changes and `git ai blame <file>` to inspect committed attribution.
 
-Additionally, all AI contributions will be marked with [GitAI](https://usegitai.com/).
+Existing `ai_generated` comments and Markdown tags are legacy AI markers and remain in place; they do not retroactively populate Git AI attribution. Do not add new inline AI markers.
 
 ## Parts of the System
 
