@@ -19,7 +19,7 @@ VPS/
 │   │   ├── local/hosts.yaml
 │   │   └── prod/
 │   │       ├── hosts.yaml
-│   │       └── host_vars/ares/vault.yml
+│   │       └── host_vars/hermes/vault.yml
 │   ├── roles/
 │   ├── sites/
 │   │   └── bearworks.yml
@@ -52,7 +52,7 @@ The Ansible inventory alias is the machine's identity everywhere:
 
 | Environment | Inventory name | OS hostname  | Libvirt name   |
 | ----------- | -------------- | ------------ | -------------- |
-| Production  | `ares`         | `ares`       | Not applicable |
+| Production  | `hermes`       | `hermes`     | Not applicable |
 | Local       | `ares-local`   | `ares-local` | `ares-local`   |
 
 Future machines follow the same convention: `hera` in production and
@@ -84,7 +84,7 @@ all:
 # ansible/inventories/prod/hosts.yaml
 all:
   hosts:
-    ares:
+    hermes:
       ansible_host: example.server.net
       env_type: prod
       configure_production_tls: false

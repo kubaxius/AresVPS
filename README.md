@@ -20,7 +20,7 @@ Existing `ai_generated` comments and Markdown tags are legacy AI markers and rem
 
 ## Parts of the System
 
-### Ares VPS
+### Hermes VPS
 
 The system is currently being built around a single VPS. It is intended to host my website, blog, form relay, Matrix server, and any other required services. Eventually, these services may be separated across multiple dedicated machines.
 

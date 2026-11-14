@@ -5,7 +5,7 @@ tags: ai_generated
 # Pantheon Systems roadmap
 
 Pantheon is the configuration for a growing private network of servers, not just
-a website deployment. Start with one Hetzner VPS (`ares`) acting as a NetBird
+a website deployment. Start with one Hetzner VPS (`hermes`) acting as a NetBird
 internet exit node and, later, hosting the public BearWorks website. Add a
 separate server for private Podman services after the first VPS is working.
 File hosting and backups come later. NetBird Cloud provides the control plane;
