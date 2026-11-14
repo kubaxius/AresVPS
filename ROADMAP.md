@@ -2,249 +2,147 @@
 tags: ai_generated
 ---
 
-# VPS Infrastructure TODO
+# Pantheon Systems roadmap
 
-VM-first roadmap for deploying the BearWorks Astro website. GitHub Releases is the signed artifact source; servers pull releases through a small host-side agent, without CI access to the hosts.
+Pantheon is the configuration for a growing private network of servers, not just
+a website deployment. Start with one Hetzner VPS (`ares`) acting as a NetBird
+internet exit node and, later, hosting the public BearWorks website. Add a
+separate server for private Podman services after the first VPS is working.
+File hosting and backups come later. NetBird Cloud provides the control plane;
+this project does not need to host NetBird's management services.
 
-## Completed foundation
+Each phase should leave a useful, recoverable system. Later services are not
+prerequisites for the first VPS. Keep server configuration in Ansible and
+secrets outside plaintext inventory and Git. Do not run production changes
+automatically from GitHub Actions.
 
-- [x] Create `infra/`, `ansible/`, and `.github/workflows/` directories
-- [x] Add `.gitignore` entries for OpenTofu state, environment files, Vault passwords, private keys, generated inventories, certificates, VM images, caches, and logs
-- [x] Download an Ubuntu Server 24.04 LTS cloud image
-- [x] Create a libvirt VM with 2 vCPU, 4 GB RAM, and a 25 GB disk
-- [x] Configure NAT networking
-- [x] Create cloud-init configuration for the administrative user, SSH key, and Python
-- [x] Add commands to create, start, stop, rebuild, and destroy the local VM
-- [x] Confirm SSH access to the local VM
-- [x] Create the main Ansible playbook
-- [x] Add the initial Ansible requirements and configuration
-- [x] Install Nginx through Ansible
+## Existing foundation
 
-## Phase 1 — Stabilize the local Ansible foundation
+- [x] Local Ubuntu 24.04 VM, cloud-init users, SSH access, and VM lifecycle commands
+- [x] Local and production Ansible inventories and base, access, firewall, and Nginx roles
+- [x] Static-site configuration, signed-release download/verification, and `pantheon-srv` activation tooling
+- [x] BearWorks site definition and local VM configuration path
 
-- [ ] Pin the Ubuntu cloud image and record its checksum
-- [x] Replace the single inventory with separate `local` and `prod` inventories using canonical machine names
-- [x] Add shared variables and environment-specific variables
-- [x] Keep production TLS, production DNS, and the production Tailscale identity disabled in the local inventory
-- [x] Refactor `site.yml` so roles run in this deterministic order:
-  - base system
-  - access and SSH
-  - firewall
-  - Nginx
-  - static-site hosting
-  - optional Tailscale
-- [x] Complete the base-system role:
-  - configure hostname, timezone, locale, and time synchronization
-  - install required system packages
-  - configure unattended security upgrades
-  - configure journald limits and log rotation
-- [x] Complete the steady-state access role:
-  - manage administrative users, authorized keys, and sudo policy
-  - enforce key-only SSH authentication
-  - disable SSH password authentication
-  - disable direct root SSH login
-  - validate SSH configuration before reloading
-- [x] Complete the firewall role while keeping local and production rules configurable
-- [ ] Add Ansible Vault configuration and encrypted environment variables
-- [ ] Add safe example configuration files:
-  - add `.env.example` containing every required variable name with placeholder values
-  - add example OpenTofu variable files for local and production inputs
-  - confirm examples contain no credentials, private keys, or real infrastructure identifiers
-- [x] Add local commands to configure and test the VM with Ansible
-- [ ] Add formatting and validation commands for Ansible and OpenTofu
-- [x] Add YAML linting, `ansible-lint`, and Ansible syntax checks
-- [x] Rebuild the VM from scratch and confirm Ansible can connect
-- [x] Run the complete playbook twice and confirm the second run is idempotent
-- [x] Confirm key-based SSH succeeds and password-based and root SSH fail
-- [ ] **Gate:** do not proceed until a clean VM can be recreated and configured without manual server changes
+These are implementation pieces, **not** proof of production readiness. The
+production inventory still has a placeholder address; its SSH keys and firewall
+policy need production-specific values. The Nginx site currently serves HTTP,
+and the production signed-release publishing path needs end-to-end testing.
+The full `ansible/site.yml` also attempts a site update on every apply, so use
+a separate, limited bootstrap path until a compatible signed release exists.
 
-## Phase 2 — Prepare the Astro project for self-hosting
+## Phase 1 — First VPS: NetBird exit node and private administration
 
-- [x] Pin the Node major version used locally and in CI
-- [x] Add explicit scripts for `astro check` and the production build
-- [x] Replace the Netlify contact form with localized “temporarily unavailable” text and the existing email link
-- [x] Remove the Netlify form handler and form-specific attributes from the production output
-- [x] Keep `/pl/` and `/en/` statically generated through `getStaticPaths()`
-- [x] Keep `/` redirecting to `/pl/`
-- [x] Run `npm ci`, type checking, and the production build from a clean checkout
-- [x] Verify that `dist/` contains at least:
-  - `index.html`
-  - `pl/index.html`
-  - `en/index.html`
-  - the expected localized nested pages
-  - hashed `/_astro/` assets
-- [x] **Gate:** do not proceed until the site builds reproducibly without Netlify or a running Astro server
+Goal: an independently useful, recoverable Hetzner VPS that provides internet
+egress to selected NetBird peers. Website deployment comes later.
 
-## Phase 3 — Build the static-site release MVP
+- [ ] Decide the initial Hetzner location, Ubuntu 24.04 x86-64 server size,
+      public IPv4/IPv6, backup option, and how the server will be rebuilt.
+- [ ] Prepare distinct production SSH keys and production cloud-init for the
+      `ansible` and `jbear` users; do not reuse local-VM keys or its QEMU setup.
+- [ ] Prepare a NetBird peer group, narrowly scoped administration policy, and
+      one-off, non-ephemeral setup key. Keep enrollment credentials out of Git,
+      cloud-init/user data, and the website release pipeline.
+- [ ] Create a Hetzner Cloud Firewall with outbound traffic permitted and only
+      temporary, key-only public SSH access for bootstrap. Record the recovery
+      procedure using Hetzner Console/Rescue if NetBird becomes unavailable.
+- [ ] Provision the first VPS without changing website DNS. Enroll the NetBird
+      client and verify access to both administrative accounts over NetBird.
+- [ ] Set the production Ansible inventory to the VPS's NetBird address and
+      configure production SSH keys and host firewall rules. Apply only the
+      base/access/firewall bootstrap roles at this stage.
+- [ ] Test UFW alongside NetBird on the `wt0` interface. Permit private SSH
+      without exposing port 22 publicly; verify NetBird access policies still
+      restrict which peers can connect. Do not assume the local-VM SSH rule
+      (`192.168.122.0/24`) is suitable for production.
+- [ ] Remove the temporary public SSH rule **after** a new NetBird SSH session
+      and Ansible connection both work. Retest access after a reboot.
+- [ ] Configure this peer as an exit node for the intended NetBird group only;
+      verify forwarding, masquerading, DNS, IPv4/IPv6 behavior, and access
+      controls from a client. Check the interactions between NetBird's routing
+      rules and UFW's default routed-traffic policy.
+- [ ] **Gate:** the VPS is usable as an exit node, is manageable privately,
+      exposes no public SSH, and can be recovered if NetBird fails.
 
-- [x] Add a reusable `static_site` Ansible role rather than an Astro-specific role
-- [x] Create the deployment paths:
-  - `/srv/www/bearworks/releases`
-  - `/srv/www/bearworks/current`
-  - `/srv/www/bearworks/staged`
-- [x] Give Nginx read access to deployed releases
-- [x] Configure `systemd-sysupdate` to pull signed releases from GitHub Releases
-- [x] Install the standalone `pantheon-srv` tool outside the Ansible roles to:
-  - serialize update and activation operations
-  - verifies the required Polish and English entrypoints
-  - atomically replaces the `current` symlink
-  - exposes only `update`, `activate`, and `list`
-- [x] Discover websites from one YAML definition per site
-- [x] Let Ansible install the shared toolset and configure each site without managing release state
-- [x] Synchronously update every configured site after each Ansible apply
-- [x] Retain the active release and three older releases for manual activation
-- [x] **Gate:** do not proceed until invalid or unsigned releases cannot replace the active release
+## Phase 2 — Reproducible production deployment
 
-## Phase 4 — Configure and test Nginx locally
+Goal: recreate the first VPS and its network role without undocumented manual
+server changes. Manual Hetzner provisioning is acceptable initially; OpenTofu
+is an option if it materially improves repeatability.
 
-- [ ] Extend the Nginx configuration with a BearWorks virtual host rooted at `/srv/www/bearworks/current`
-- [ ] Redirect exactly `/` to `/pl/`
-- [ ] Serve Astro directory routes and their `index.html` files
-- [ ] Return a real 404 for unknown files and routes
-- [ ] Add long-lived immutable caching only for hashed `/_astro/` assets
-- [ ] Prevent long-lived caching of HTML and unhashed public files
-- [ ] Add the intended security headers
-- [ ] Redirect `www.bearworks.pl` to the canonical apex hostname
-- [ ] Use a local self-signed certificate through configurable certificate paths to exercise the HTTPS vhost without public DNS
-- [ ] Verify `nginx -t` before every configuration reload
-- [ ] Test the vhost from the workstation using an `/etc/hosts` entry or explicit `Host` header
-- [ ] Verify `/`, both languages, nested routes, static assets, cache headers, canonical-host redirects, HTTPS, and 404 behavior
-- [ ] Reboot the VM and confirm Nginx and the active release recover correctly
+- [ ] Document the Hetzner resources, IPs, firewall, enrollment, SSH key
+      recovery, inventory, and backup choices; keep credentials out of the repo.
+- [ ] Automate or document the NetBird client installation and safe enrollment
+      path. Keep its administration and exit-node policies separate from website
+      configuration.
+- [ ] Split first-boot configuration from full `ansible/site.yml`, so a missing
+      website release cannot block access and network setup.
+- [ ] Test a new-server bootstrap, repeat Ansible for idempotence, and verify
+      NetBird and SSH reconnect after reboot. Exercise the recovery procedure.
+- [ ] If adopting OpenTofu, pin the Hetzner provider, secure state and API
+      credentials, and review plans before applying; DNS provider automation
+      is not required for the first deployment.
+- [ ] **Gate:** the first VPS's exit-node and administration setup can be
+      reproduced safely before adding the public website.
 
-## Phase 5 — Exercise releases and rollback on the VM
+## Phase 3 — Public BearWorks website on the first VPS
 
-- [ ] Deploy release A and verify its content
-- [ ] Deploy release B and verify the symlink switches atomically
-- [ ] Roll back to release A without rebuilding it
-- [ ] Confirm an update check with no new release leaves a manual activation unchanged
-- [ ] Publish an archive with a bad checksum in a test repository and confirm the active site remains unchanged
-- [ ] Attempt an archive missing a locale entrypoint and confirm it is rejected
-- [ ] Deploy enough releases to verify retention pruning
-- [ ] Run Ansible again and confirm a no-op update does not overwrite or reactivate a release
-- [ ] Destroy and recreate the VM, then repeat the complete deployment test
-- [ ] **Gate:** do not introduce CI or production until the entire release lifecycle passes on a freshly recreated VM
+Goal: add one public static website to the existing exit node without making
+administrative or NetBird services public.
 
-## Phase 6 — Add optional Tailscale administration
+- [ ] Confirm the separate Astro website repository reproducibly builds the
+      required Polish and English static pages and publishes compatible signed
+      GitHub Release archives. Keep CI free of VPS and NetBird credentials.
+- [ ] Exercise signed download, rejection of invalid releases, activation,
+      rollback, retention, and reboot recovery on a clean VM and the VPS.
+- [ ] Finish the BearWorks Nginx vhost: directory routes and real 404s,
+      appropriate asset caching and headers, apex/`www` redirects, and
+      configuration validation before reload.
+- [ ] Open public TCP 80/443 in both the Hetzner Cloud Firewall and UFW.
+      Configure trusted HTTPS for the apex and `www`, automatic renewal, and
+      HTTP-to-HTTPS redirects. Leave public SSH closed.
+- [ ] Test the site by public IP/explicit hostname before DNS migration.
+      Record current DNS and rollback steps, then switch A/AAAA and `www`.
+- [ ] Verify the website externally over IPv4/IPv6, the exit node and private
+      SSH from NetBird, release rollback, certificate renewal, and reboot
+      recovery. Do not make release updates depend on NetBird availability.
+- [ ] **Gate:** the VPS has exactly two intended workloads: NetBird exit node
+      and public static website. No Astro/Node runtime or other public app
+      ports are required on the server.
 
-- [ ] Add a Tailscale Ansible role
-- [ ] Store Tailscale enrollment secrets in Ansible Vault
-- [ ] Keep Tailscale disabled by default in the local inventory until this phase
-- [ ] Enroll the test VM as `tag:bearworks-vm`
-- [ ] Keep Tailscale independent from the website release pipeline
-- [ ] Keep the VM’s ordinary SSH key authentication for administration
-- [ ] Confirm the workstation can reach the VM over MagicDNS
-- [ ] Keep the public production SSH policy unchanged during this phase
+## Phase 4 — Second server: private Podman hosting
 
-## Phase 7 — Publish signed GitHub Releases
+Goal: add another Ansible-managed host for private services, without turning
+the first VPS into a general-purpose application host.
 
-- [ ] Add a normal CI workflow for pushes and pull requests that runs `npm ci`, `astro check`, and `npm run build` without deployment credentials
-- [ ] Pin every third-party GitHub Action to a full commit SHA
-- [ ] Grant the release job only `contents: write`
-- [ ] Build and package the selected commit in GitHub Actions
-- [ ] Generate and sign `SHA256SUMS` with the protected artifact-signing key
-- [ ] Publish the archive, `SHA256SUMS`, and `SHA256SUMS.gpg` together as one GitHub Release
-- [ ] Confirm `releases/latest/download` exposes all three assets
-- [ ] Let the VM pull and activate the release through `pantheon-srv`
-- [ ] Confirm a failed verification does not activate or delete the previous release
-- [ ] Confirm CI has no VM or production credentials
-- [ ] **Gate:** do not provision production until the VM reliably consumes signed GitHub Releases
+- [ ] Choose where the second server runs, what resources it needs, and how it
+      is reached and recovered over NetBird.
+- [ ] Extend inventories and host/group variables so shared base/access rules
+      are reusable while website, exit-node, and Podman roles target only the
+      appropriate hosts.
+- [ ] Establish a Podman image/service pattern: approved image sources and
+      versions, least-privilege users, volumes, systemd/Quadlet startup,
+      health checks, logging, upgrades, and rollback.
+- [ ] Bind private services only to appropriate private interfaces or
+      localhost behind a NetBird-accessible proxy; verify they cannot be
+      reached from the public internet.
+- [ ] Rebuild and reboot the second host to verify services recover without
+      disrupting the website or exit node.
 
-## Phase 8 — Provision and validate the production VPS
+## Phase 5 — File hosting, backups, and further hosts
 
-- [ ] Install OpenTofu locally
-- [ ] Configure pinned OpenTofu and provider versions
-- [ ] Configure the Hetzner Cloud and Netlify providers
-- [ ] Define inputs for tokens, location, server type, domain, SSH key, and administrator CIDRs
-- [ ] Keep provider credentials in an untracked environment file
-- [ ] Configure encrypted remote state, or document and secure the chosen local-state approach
-- [ ] Add OpenTofu formatting, initialization-without-backend, and validation checks to CI
-- [ ] Complete the production OpenTofu configuration for:
-  - one Hetzner server using the chosen Ubuntu 24.04 LTS image and location
-  - registered administrative SSH key
-  - persistent IPv4 and IPv6 addresses
-  - attached Hetzner Cloud Firewall
-  - TCP 80 and 443 from the Internet
-  - TCP 22 only from administrator break-glass CIDRs, never GitHub runner IP ranges
-  - server labels for inventory discovery
-  - delete and rebuild protection
-  - automatic server backups
-- [ ] Run and review an OpenTofu plan before applying
-- [ ] Provision the VPS and create the production Ansible inventory from OpenTofu outputs
-- [ ] Apply the same Ansible roles already exercised on the VM
-- [ ] Optionally enroll the VPS in Tailscale for administration
-- [ ] Bootstrap the latest signed release during the first Ansible run
-- [ ] Validate it over SSH with local Nginx health checks and, where practical, through the public IP with an explicit `Host` header
-- [ ] Verify application ports other than intended public HTTP and HTTPS are not publicly reachable
-- [ ] Verify break-glass SSH is available only from configured CIDRs
-- [ ] Reboot the VPS and confirm the selected release remains active
-- [ ] **Gate:** do not change DNS until Ansible, signed update, rollback, and reboot recovery all pass in production
+- [ ] Define file access, capacity, privacy, and persistence requirements
+      before selecting a file-hosting service or adding it to Podman.
+- [ ] Select an independent off-server backup destination; implement encrypted
+      scheduled backups, retention, and backup-health alerts.
+- [ ] Test restoring both service configuration and actual user data to a
+      replacement host. Hetzner server backups alone are not the off-server
+      data-backup plan.
+- [ ] Add future servers and private services as separate Ansible inventory
+      hosts/groups with explicit NetBird access policies and recovery steps.
 
-## Phase 9 — Enable tag-only published releases
+## Not on the critical path
 
-- [ ] Add a production workflow triggered only by tags matching `vMAJOR.MINOR.PATCH`
-- [ ] Verify that the tagged commit is reachable from `master`
-- [ ] Refuse to reuse or overwrite an existing release identifier
-- [ ] Build, validate, package, checksum, sign, and publish the release
-- [ ] Confirm servers independently download and validate the published version
-- [ ] Ensure CI cannot run infrastructure applies
-- [ ] Create the first production tag before fresh-server bootstrap
-- [ ] Document the rollback command and test it before DNS migration
-
-## Phase 10 — Migrate DNS and enable trusted TLS
-
-- [ ] Import or reference the existing Netlify DNS zone without changing live website records
-- [ ] Record the current apex and `www` DNS records for rollback
-- [ ] Lower their TTL before the migration
-- [ ] Confirm the public HTTP vhost and ACME challenge path work on the VPS
-- [ ] Optionally validate the VPS through a temporary `vps.<domain>` hostname
-- [ ] Point the apex A and AAAA records to the VPS
-- [ ] Point `www` to the VPS or the chosen apex alias
-- [ ] Wait for authoritative DNS propagation
-- [ ] Obtain a Let’s Encrypt certificate covering `bearworks.pl` and `www.bearworks.pl`
-- [ ] Replace the local/test certificate paths with the production certificate paths
-- [ ] Enable HTTP-to-HTTPS and `www`-to-apex redirects
-- [ ] Verify automatic certificate renewal with a dry run
-- [ ] Test the site from outside the tailnet on IPv4 and IPv6
-- [ ] Verify Polish and English routes, assets, redirects, headers, 404s, and mobile behavior
-- [ ] Monitor logs and availability throughout the rollback window
-- [ ] Verify the documented DNS rollback procedure
-- [ ] Remove obsolete Netlify website records only after the new deployment remains healthy
-
-## Phase 11 — Documentation and post-migration work
-
-- [ ] Document prerequisites and initial workstation setup
-- [ ] Document the local VM creation, configuration, testing, and rebuild sequence
-- [ ] Document production planning, provisioning, deployment, rollback, and DNS migration
-- [ ] Add external uptime monitoring and certificate-expiry alerts
-- [ ] Decide how the contact form backend should run
-- [ ] Define rate limiting, spam protection, validation, mail delivery, secret management, logging, and privacy requirements before re-enabling the form
-- [ ] Complete the Docker Compose foundation before adding a containerized form backend or another service:
-  - install Docker Engine and the Docker Compose plugin
-  - add the administrative user to the Docker group
-  - configure Docker daemon log rotation
-  - create `/opt/services`
-  - define the directory convention for Compose services
-  - bind application ports only to `127.0.0.1`
-  - configure services to restart after a reboot
-  - create and verify a containerized test service through Nginx
-- [ ] Evaluate and select a CMS for Astro websites:
-  - define editorial, preview, media, authentication, deployment, licensing, and backup requirements
-  - prototype the preferred option with a complete draft-to-publish workflow
-- [ ] Define persistent-data locations before adding a stateful service
-- [ ] Select an independent off-server backup destination
-- [ ] Configure encrypted scheduled backups and retention
-- [ ] Add backup-health monitoring
-- [ ] Document and test data restoration
-- [ ] Add a private-service template for Tailscale-only applications
-- [ ] Evaluate Obsidian synchronization and hosting options
-- [ ] Evaluate and select privacy-conscious analytics
-- [ ] Evaluate remote OpenTofu state before enabling CI deployments or adding collaborators
-
-## Acceptance criteria
-
-- [ ] The VM can be destroyed, recreated, configured, deployed, upgraded, and rolled back without manual server edits
-- [ ] The exact artifact activation mechanism tested on the VM is used in production
-- [ ] GitHub Actions has no SSH, Tailscale, VM, or VPS deployment credentials
-- [ ] The VM and VPS authenticate the same GitHub Release with the same public signing key
-- [ ] The Astro website runs as static Nginx content with no Astro or Node process on the server
-- [ ] Production DNS changes only after the complete deployment path passes on both the VM and the unadvertised VPS
+Do not delay the first VPS for a CMS, contact-form backend, analytics, private
+file hosting, Podman, automated DNS management, or CI-driven infrastructure
+applies. This plan replaces the previous Tailscale and Docker Compose work with
+NetBird and a later Podman-based private-service host.
