@@ -45,8 +45,9 @@ egress to selected NetBird peers. Website deployment comes later.
 - [ ] Create a Hetzner Cloud Firewall with outbound traffic permitted and only
       temporary, key-only public SSH access for bootstrap. Record the recovery
       procedure using Hetzner Console/Rescue if NetBird becomes unavailable.
-- [ ] Provision the first VPS without changing website DNS. Enroll the NetBird
-      client and verify access to both administrative accounts over NetBird.
+- [x] Provision Hermes and connect it to NetBird.
+- [ ] Verify access to both administrative accounts over NetBird and confirm
+      website DNS has not been changed for the VPS.
 - [ ] Set the production Ansible inventory to the VPS's NetBird address and
       configure production SSH keys and host firewall rules. Apply only the
       base/access/firewall bootstrap roles at this stage.
@@ -56,10 +57,11 @@ egress to selected NetBird peers. Website deployment comes later.
       (`192.168.122.0/24`) is suitable for production.
 - [ ] Remove the temporary public SSH rule **after** a new NetBird SSH session
       and Ansible connection both work. Retest access after a reboot.
-- [ ] Configure this peer as an exit node for the intended NetBird group only;
-      verify forwarding, masquerading, DNS, IPv4/IPv6 behavior, and access
-      controls from a client. Check the interactions between NetBird's routing
-      rules and UFW's default routed-traffic policy.
+- [x] Confirm a NetBird client reaches the Internet through Hermes as an exit node.
+- [ ] Verify exit-node access is limited to the intended group; check DNS,
+      IPv4/IPv6 behavior, masquerading, and routing after reboot. Check the
+      interactions between NetBird's routing rules and UFW's default
+      routed-traffic policy.
 - [ ] **Gate:** the VPS is usable as an exit node, is manageable privately,
       exposes no public SSH, and can be recovered if NetBird fails.
 

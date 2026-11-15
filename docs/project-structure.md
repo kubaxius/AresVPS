@@ -50,10 +50,10 @@ and synchronously asks the CLI to update it at the end of the play.
 
 The Ansible inventory alias is the machine's identity everywhere:
 
-| Environment | Inventory name | OS hostname  | Libvirt name   |
-| ----------- | -------------- | ------------ | -------------- |
-| Production  | `hermes`       | `hermes`     | Not applicable |
-| Local       | `ares-local`   | `ares-local` | `ares-local`   |
+| Environment | Inventory name | OS hostname    | Libvirt name   |
+| ----------- | -------------- | -------------- | -------------- |
+| Production  | `hermes`       | `hermes`       | Not applicable |
+| Local       | `hermes-local` | `hermes-local` | `hermes-local` |
 
 Future machines follow the same convention: `hera` in production and
 `hera-local` for its local test VM. `ansible_host`, when present, is only a
@@ -62,6 +62,10 @@ connection address; it does not define machine identity.
 The base Ansible role assigns `inventory_hostname` as the OS hostname. Local VM
 commands pass the same inventory name to libvirt and generate matching
 cloud-init metadata at creation time.
+
+Changing an inventory name does not rename an existing libvirt VM or the
+workstation's SSH host entry. Update the chezmoi-managed SSH configuration and
+rename or recreate the local VM before using the new local hostname.
 
 ## Inventories
 
@@ -72,7 +76,7 @@ local command cannot accidentally target production.
 # ansible/inventories/local/hosts.yaml
 all:
   hosts:
-    ares-local:
+    hermes-local:
       env_type: local
       configure_production_tls: false
       vm_network: default
@@ -97,7 +101,7 @@ Machine-specific production secrets belong in that machine's encrypted
 
 ## Local SSH configuration
 
-Ansible connects to `ares-local` without an `ansible_host` override. OpenSSH
+Ansible connects to `hermes-local` without an `ansible_host` override. OpenSSH
 resolves that name to the reserved VM address:
 
 ```sshconfig
@@ -108,12 +112,12 @@ Host *-local
     StrictHostKeyChecking accept-new
     UserKnownHostsFile ~/.ssh/known_hosts_pantheon.local
 
-Host ares-local
+Host hermes-local
     HostName 192.168.122.10
-    HostKeyAlias ares-local-vm
+    HostKeyAlias hermes-local-vm
 ```
 
-For an interactive `ssh ares-local` session, `%r` expands to `jbear`. Ansible
+For an interactive `ssh hermes-local` session, `%r` expands to `jbear`. Ansible
 sets the remote user to `ansible`, so the same entry resolves to
 `~/.ssh/pantheon_local_ansible_ed25519`.
 
@@ -122,7 +126,7 @@ Cloud-init installs the corresponding public keys from
 key, remove the old test-only entry before reconnecting:
 
 ```bash
-ssh-keygen -R ares-local-vm -f ~/.ssh/known_hosts_pantheon.local
+ssh-keygen -R hermes-local-vm -f ~/.ssh/known_hosts_pantheon.local
 ```
 
 ## Local VM flow
@@ -139,12 +143,12 @@ local Ansible inventory
 The supported lifecycle commands are:
 
 ```console
-pantheon vm create ares-local
-pantheon vm start ares-local
+pantheon vm create hermes-local
+pantheon vm start hermes-local
 pantheon vm restart --all
 pantheon vm shutdown --all --force
 pantheon vm state --all
-pantheon vm destroy ares-local
+pantheon vm destroy hermes-local
 pantheon vm destroy --all
 ```
 

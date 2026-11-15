@@ -85,7 +85,7 @@ Use Ubuntu 24.04’s `systemd-sysupdate` to verify, extract, retain, and stage s
 - On rollout:
   1. Provision sysupdate, feed, staging Nginx, controller, units, keyring, and Polkit alongside the existing `current` release.
   2. Initialize `staged` from `current`.
-  3. deploy and roll back a test release on `ares-local`;
+  3. deploy and roll back a test release on `hermes-local`;
   4. only then remove the old Python archive engine, launcher, sudoers entry, and their tests.
 - Rewrite the workshop’s helper, manual laboratory, VM deployment, production deployment, rollback, troubleshooting, and acceptance sections around the signed local feed and systemd units.
 - Keep GitHub Release publication after successful production health checks; it receives the same archive deployed by sysupdate.
@@ -95,7 +95,7 @@ Use Ubuntu 24.04’s `systemd-sysupdate` to verify, extract, retain, and stage s
 - Unit-test the controller’s configuration typing, release-ID validation, locking, symlink-boundary checks, entrypoint checks, staged promotion, rollback, and restoration after health failure.
 - Test rendered sysupdate definitions, systemd units, Polkit rules, controller config, and both Nginx listeners with two independent site instances.
 - Use `systemd-analyze verify`, `nginx -t`, Ansible syntax checking, `ansible-lint`, BasedPyright strict mode, and the complete Python test suite.
-- On `ares-local`, verify:
+- On `hermes-local`, verify:
   - valid signed deployment and identical rerun;
   - corrupted archive, checksum mismatch, unknown key, and bad signature rejection;
   - partial feed upload cannot deploy;

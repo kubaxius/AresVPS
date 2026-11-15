@@ -2,7 +2,7 @@
 # ansible/inventories/local/hosts.yaml
 all:
   hosts:
-    ares-local:
+    hermes-local:
       env_type: local
       configure_production_tls: false
       vm_network: default
