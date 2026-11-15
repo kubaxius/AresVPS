@@ -3,6 +3,6 @@
 all:
   hosts:
     hermes:
-      ansible_host: example.server.net
+      ansible_host: 100.108.231.143
       env_type: prod
       configure_production_tls: false

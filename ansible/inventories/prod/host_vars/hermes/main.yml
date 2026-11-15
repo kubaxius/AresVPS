@@ -1,0 +1,18 @@
+---
+# ansible/inventories/prod/host_vars/hermes/main.yml
+access_jbear_ssh_keys:
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICvgiMfhWjMor8ATvxHVHtvPE9Q3maSU4pIlsVbId+8e kubaxius@Deimos
+
+firewall_rules:
+  - comment: ssh-over-netbird
+    rule: allow
+    direction: in
+    protocol: tcp
+    port: "22"
+    interface: wt0
+
+  - comment: netbird-exit-to-internet
+    rule: allow
+    route: true
+    interface_in: wt0
+    interface_out: eth0

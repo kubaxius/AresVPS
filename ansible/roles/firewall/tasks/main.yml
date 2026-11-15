@@ -26,10 +26,14 @@
 - name: Configure firewall rules
   community.general.ufw:
     rule: "{{ item.rule }}"
-    direction: "{{ item.direction | default('in') }}"
+    direction: "{{ omit if (item.route | default(false)) else (item.direction | default('in')) }}"
     proto: "{{ item.protocol | default(omit) }}"
     port: "{{ item.port | default(omit) }}"
     src: "{{ item.src | default('any') }}"
+    interface: "{{ item.interface | default(omit) }}"
+    route: "{{ item.route | default(omit) }}"
+    interface_in: "{{ item.interface_in | default(omit) }}"
+    interface_out: "{{ item.interface_out | default(omit) }}"
     comment: "{{ item.comment | default(omit) }}"
   loop: "{{ firewall_rules }}"
   when: firewall_enabled

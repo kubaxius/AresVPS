@@ -1,0 +1,26 @@
+#cloud-config
+
+ssh_pwauth: false
+disable_root: true
+
+users:
+  - name: ansible
+    gecos: Ansible User
+    groups: [sudo]
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_authorized_keys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICAUJg088GKN9rV/X/5eNZLfoOhFdtMSyQlm6A6YB1qv kubaxius@Deimos"
+
+  - name: jbear
+    gecos: Administrative User
+    groups: [sudo]
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_authorized_keys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICvgiMfhWjMor8ATvxHVHtvPE9Q3maSU4pIlsVbId+8e kubaxius@Deimos"
+
+packages:
+  - python3
