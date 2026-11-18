@@ -2,7 +2,7 @@
 # ansible/roles/base/tasks/utf8.yml
 - name: Configure UTF-8 system locale
   ansible.builtin.copy:
-    dest: /etc/default/locale
+    dest: /etc/locale.conf
     content: |
       LANG=C.UTF-8
     owner: root

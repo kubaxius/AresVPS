@@ -10,7 +10,6 @@ base_units:
   - apt-daily.timer # Refreshes package metadata and downloads available updates daily.
   - apt-daily-upgrade.timer # Installs available package upgrades and performs cleanup daily.
   - logrotate.timer # Rotates, compresses, and removes system logs on schedule.
-  - systemd-timesyncd.service # Synchronizes the system clock with network time servers.
 
 base_journald_limits:
   storage: persistent
