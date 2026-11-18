@@ -1,8 +1,19 @@
 ---
 # ansible/inventories/prod/hosts.yaml
 all:
-  hosts:
-    hermes:
-      ansible_host: 100.108.231.143
-      env_type: prod
-      configure_production_tls: false
+  children:
+    managed:
+      hosts:
+        hermes:
+          ansible_host: 100.108.231.143
+          env_type: prod
+          configure_production_tls: false
+    private_gateways:
+      hosts:
+        hermes:
+    public_web:
+      hosts:
+        hermes:
+    podman_hosts:
+      hosts:
+        hermes:

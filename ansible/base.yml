@@ -1,0 +1,9 @@
+---
+# ansible/base.yml
+- name: Configure managed hosts
+  hosts: managed
+  become: true
+  roles:
+    - base
+    - access
+    - firewall

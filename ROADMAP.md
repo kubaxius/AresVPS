@@ -30,13 +30,13 @@ production inventory, cloud-init, and host firewall rules have been prepared,
 but applying them to Hermes and testing private SSH and firewall behavior remain
 unverified. UFW was last reported inactive; no live firewall changes are
 assumed. The Nginx site currently serves HTTP, and the production signed-release
-publishing path needs end-to-end testing. The existing `ansible/site.yml`
-targets every host and attempts a website update on every apply: do not run it
-against Hermes until its work is split into targeted playbooks.
+publishing path needs end-to-end testing. The former `ansible/site.yml` has
+been removed; the CLI and deployment documentation still refer to it. Do not
+use those entry points until they target the new, independently tested playbooks.
 
 ## Ansible layout to build
 
-- [ ] Add `ansible/base.yml` for `base`, `access`, and `firewall` on managed
+- [x] Add `ansible/base.yml` for `base`, `access`, and `firewall` on managed
       hosts. Keep public website and container setup out of the first apply.
 - [ ] Add `ansible/web.yml` with **separate plays and roles** for `private_gateways`
       and `public_web`. The private gateway must work without a published
@@ -48,6 +48,14 @@ against Hermes until its work is split into targeted playbooks.
       explicit; the current `firewall_rules` list is replaced, not merged, when
       inventory overrides it. Keep an optional combined entry point only after
       the individual playbooks are safe and independently testable.
+
+Layout progress: `web.yml` has two plays but references a missing
+`private_gateway` role, and its public-site tasks are not yet a separate role.
+`podman.yml` references a missing `podman_host` role and does not yet select
+individual services. Production capability groups exist, but the local
+inventory mistakenly places `hermes` instead of `hermes-local` in its capability
+groups; fix that before testing. Firewall defaults now have no inbound allow
+rules, with explicit SSH rules in the production and local inventories.
 
 ## Phase 1 — Minimum safe Hermes bootstrap
 

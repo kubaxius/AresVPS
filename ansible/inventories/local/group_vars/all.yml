@@ -1,6 +1,14 @@
 ---
+ansible_user: ansible
 access_jbear_ssh_keys:
   - >-
     ssh-ed25519
     AAAAC3NzaC1lZDI1NTE5AAAAIIJtjsYlGfO6H7gDP9now15ICHtpMfvEkgPqZPlsDrEm
     kubaxius@Deimos
+
+firewall_rules:
+  - comment: ssh-from-local-vm-network
+    rule: allow
+    protocol: tcp
+    port: "22"
+    src: 192.168.122.0/24

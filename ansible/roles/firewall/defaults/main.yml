@@ -9,17 +9,4 @@ firewall_default_policies:
   outgoing: allow
   routed: deny
 
-firewall_rules:
-  - comment: ssh-on-lan
-    rule: allow
-    protocol: tcp
-    port: "22"
-    src: 192.168.122.0/24
-  - comment: http
-    rule: allow
-    protocol: tcp
-    port: "80"
-  - comment: https
-    rule: allow
-    protocol: tcp
-    port: "443"
+firewall_rules: []

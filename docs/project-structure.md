@@ -94,8 +94,9 @@ all:
       configure_production_tls: false
 ```
 
-The playbook targets Ansible's built-in `all` group. Shared configuration,
-including `ansible_user: ansible`, lives in `ansible/group_vars/all.yml`.
+The base playbook targets the `managed` group. Shared configuration lives in
+`ansible/group_vars/all.yml`; each inventory's `group_vars/all.yml` sets
+`ansible_user: ansible` so ad-hoc commands also select the correct account.
 Machine-specific production secrets belong in that machine's encrypted
 `host_vars/<name>/vault.yml` file.
 

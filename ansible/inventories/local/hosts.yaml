@@ -1,10 +1,21 @@
 ---
 # ansible/inventories/local/hosts.yaml
 all:
-  hosts:
-    hermes-local:
-      env_type: local
-      configure_production_tls: false
-      vm_network: default
-      vm_mac: "52:54:00:00:00:10"
-      vm_ip: "192.168.122.10"
+  children:
+    managed:
+      hosts:
+        hermes-local:
+          env_type: local
+          configure_production_tls: false
+          vm_network: default
+          vm_mac: "52:54:00:00:00:10"
+          vm_ip: "192.168.122.10"
+    private_gateways:
+      hosts:
+        hermes-local:
+    public_web:
+      hosts:
+        hermes-local:
+    podman_hosts:
+      hosts:
+        hermes-local:

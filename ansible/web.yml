@@ -1,0 +1,26 @@
+---
+- name: Configure private HTTPS gateways
+  hosts: private_gateways
+  become: true
+  roles:
+    - nginx
+    - private_gateway
+
+- name: Configure public websites
+  hosts: public_web
+  become: true
+  roles:
+    - nginx
+    - pantheon_server
+  tasks:
+    - name: Discover static site definitions
+      ansible.builtin.set_fact:
+        pantheon_site_definition_files: >-
+          {{ query('ansible.builtin.fileglob', playbook_dir ~ '/sites/*.yml') | sort }}
+
+    - name: Configure static sites
+      ansible.builtin.include_tasks: tasks/configure_static_site.yml
+      loop: "{{ pantheon_site_definition_files }}"
+      loop_control:
+        loop_var: pantheon_site_definition_file
+        label: "{{ pantheon_site_definition_file | basename }}"

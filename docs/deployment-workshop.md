@@ -44,20 +44,20 @@ omitted, it defaults to `index.html`.
 
 Pantheon derives the remaining values:
 
-| Setting | Derived value |
-| --- | --- |
-| Local domain | `<site>.test` |
-| Production domain | Value of `domain` |
-| Site root | `/srv/www/<site>` |
-| Server config | `/etc/pantheon/sites.d/<site>.json` |
-| Sysupdate definitions | `/etc/sysupdate.<site>.d` |
-| GitHub source | `https://github.com/<repository>/releases/latest/download` |
-| Archive pattern | `<site>-@v.tar.gz` |
+| Setting               | Derived value                                              |
+| --------------------- | ---------------------------------------------------------- |
+| Local domain          | `<site>.test`                                              |
+| Production domain     | Value of `domain`                                          |
+| Site root             | `/srv/www/<site>`                                          |
+| Server config         | `/etc/pantheon/sites.d/<site>.json`                        |
+| Sysupdate definitions | `/etc/sysupdate.<site>.d`                                  |
+| GitHub source         | `https://github.com/<repository>/releases/latest/download` |
+| Archive pattern       | `<site>-@v.tar.gz`                                         |
 
 Apply Ansible. No playbook or inventory edit is needed:
 
 ```console
-ansible-playbook -i ansible/inventories/local ansible/site.yml
+ansible-playbook -i ansible/inventories/local ansible/base.yml
 ```
 
 Ansible configures every YAML file in `ansible/sites/`, applies keyring and

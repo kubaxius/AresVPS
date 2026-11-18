@@ -1,0 +1,6 @@
+---
+- name: Configure rootless Podman hosts
+  hosts: podman_hosts
+  become: true
+  roles:
+    - podman_host

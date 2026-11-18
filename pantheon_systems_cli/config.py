@@ -7,7 +7,7 @@ ANSIBLE_INVENTORIES_PATH: Path = ANSIBLE_PATH / "inventories"
 ANSIBLE_ROLES_PATH: Path = ANSIBLE_PATH / "roles"
 LOCAL_INVENTORY_PATH: Path = ANSIBLE_INVENTORIES_PATH / "local"
 PROD_INVENTORY_PATH: Path = ANSIBLE_INVENTORIES_PATH / "prod"
-PLAYBOOK_PATH: Path = ANSIBLE_PATH / "site.yml"
+PLAYBOOK_PATH: Path = ANSIBLE_PATH / "base.yml"
 
 IMAGE_URL: str = (
     "https://cloud-images.ubuntu.com"
