@@ -10,9 +10,3 @@ firewall_rules:
     protocol: tcp
     port: "22"
     interface: wt0
-
-  - comment: netbird-exit-to-internet
-    rule: allow
-    route: true
-    interface_in: wt0
-    interface_out: eth0
