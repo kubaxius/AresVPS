@@ -1,0 +1,6 @@
+---
+- name: Manage private gateway certificate
+  hosts: private_gateways
+  become: true
+  roles:
+    - private_certificate

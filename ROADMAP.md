@@ -26,10 +26,11 @@ automatically from GitHub Actions.
 - [x] BearWorks site definition and local VM configuration path
 
 These are implementation pieces, **not** proof of production readiness. The
-production inventory, cloud-init, and host firewall rules have been prepared,
-but applying them to Hermes and testing private SSH and firewall behavior remain
-unverified. UFW was last reported inactive; no live firewall changes are
-assumed. The Nginx site currently serves HTTP, and the production signed-release
+user reports a successful production base apply, successful checks of private
+administration and public SSH blocking, and working SSH after a Hermes reboot.
+The user has Hetzner console credentials saved and does not want a separate
+recovery document; actual console access has not been demonstrated here. The
+Nginx site currently serves HTTP, and the production signed-release
 publishing path needs end-to-end testing. The former `ansible/site.yml` has
 been removed; the CLI and deployment documentation still refer to it. Do not
 use those entry points until they target the new, independently tested playbooks.
@@ -43,19 +44,19 @@ use those entry points until they target the new, independently tested playbooks
       website release; do not couple proxy changes to `pantheon-srv update`.
 - [ ] Add `ansible/podman.yml` for `podman_hosts`. Define services separately
       from the shared Podman host setup so a machine can host only selected pods.
-- [ ] Put hosts in capability groups as needed: Hermes may belong to all three,
-      while future machines may belong to only one. Keep per-host firewall rules
-      explicit; the current `firewall_rules` list is replaced, not merged, when
+- [x] Put Hermes and hermes-local in the `private_gateways`, `public_web`, and
+      `podman_hosts` capability groups in their respective inventories.
+- [ ] Keep per-host firewall rules explicit as capability-specific playbooks
+      develop; the current `firewall_rules` list is replaced, not merged, when
       inventory overrides it. Keep an optional combined entry point only after
       the individual playbooks are safe and independently testable.
 
 Layout progress: `web.yml` has two plays but references a missing
 `private_gateway` role, and its public-site tasks are not yet a separate role.
 `podman.yml` references a missing `podman_host` role and does not yet select
-individual services. Production capability groups exist, but the local
-inventory mistakenly places `hermes` instead of `hermes-local` in its capability
-groups; fix that before testing. Firewall defaults now have no inbound allow
-rules, with explicit SSH rules in the production and local inventories.
+individual services. Both inventories now name their respective hosts in the
+capability groups. Firewall defaults have no inbound allow rules, with explicit
+SSH rules in the production and local inventories.
 
 ## Phase 1 — Minimum safe Hermes bootstrap
 
@@ -65,33 +66,44 @@ unnecessary routing between NetBird peers and the public interface.
 - [x] Provision Hermes and connect it to NetBird.
 - [x] Prepare a production inventory using Hermes's NetBird IP and cloud-init
       with separate administrative SSH public keys.
-- [ ] Confirm both administrative accounts and Ansible connect over NetBird;
-      restrict the peer-to-peer SSH policy to intended clients.
-- [ ] Verify Hetzner's public firewall has no inbound SSH rule. Document recovery
-      with Hetzner Console/Rescue for times when NetBird is unavailable.
+- [x] Confirm the Ansible account can connect over NetBird and that the
+      production base playbook completes.
+- [x] Confirm both administrative accounts can open fresh SSH sessions over
+      NetBird; restrict the peer-to-peer SSH policy to intended clients.
+- [x] Verify Hetzner's public firewall has no inbound SSH rule.
+- [x] Confirm that Hetzner Console can be opened and used as a fallback when
+      NetBird is unavailable; credentials are saved, but console access has not
+      been tested in this conversation. No separate recovery document requested.
 - [x] Remove the obsolete Internet-forwarding rule from Hermes's production
       UFW variables. Keep private peer-to-peer access independent of routing.
-- [ ] Confirm Hermes no longer distributes an unwanted default route in the
-      NetBird dashboard; the repo cannot verify dashboard state.
-- [ ] Apply only `ansible/base.yml` to Hermes at this stage. Keep a working
-      NetBird SSH session and Hetzner recovery access while enabling UFW for
-      the first time. Test private SSH on `wt0`, deny unsolicited public traffic,
-      and verify access again from a new session and after reboot.
-- [ ] **Gate:** Hermes is manageable privately, has no public SSH or unintended
-      forwarded traffic, and has a documented recovery path. Proceed immediately
-      to private certificates and proxying; do not wait for full rebuild automation.
+- [x] Confirm Hermes no longer distributes an unwanted default route in the
+      NetBird dashboard (user-reported dashboard check).
+- [x] Apply `ansible/base.yml` to Hermes at this stage, without the public
+      website or container playbooks; the user reports success and continued SSH
+      access afterward.
+- [x] Verify private SSH on `wt0` from fresh sessions for both accounts,
+      unsolicited public traffic denial, and SSH access after a Hermes reboot
+      (user-reported checks). Keep a working NetBird session and Hetzner
+      recovery access for follow-up firewall work.
+- [x] **Gate:** Hermes is manageable privately, has no public SSH or unintended
+      forwarded traffic, and has a verified console recovery path. Proceed to
+      private certificates and proxying without waiting for full rebuild automation.
 
 ## Phase 2 — Trusted certificate for private service names
 
 Goal: obtain a renewable, browser-trusted certificate for services that will
 never need public web listeners.
 
-- [ ] Confirm which public DNS provider is authoritative for `bearworks.pl` and
-      how to automate DNS-01 TXT challenges. Do not publish private service
-      A/AAAA records or expose Hermes's private listener to validate the cert.
-- [ ] Obtain a certificate for `*.pan.bearworks.pl` using DNS-01; add
+- [x] Identify the public DNS provider and DNS-01 automation: the user reports
+      switching `bearworks.pl` from Netlify DNS to Cloudflare DNS while keeping
+      Regery as registrar. Verify public delegation, DNS records, existing
+      Netlify website, and DNSSEC before issuing a certificate. Use Certbot's
+      Cloudflare DNS plugin with a zone-scoped API token. Do not publish private
+      service A/AAAA records or expose Hermes's private listener for validation.
+- [x] Obtain a certificate for `*.pan.bearworks.pl` using DNS-01 (user reports
+      certificate ready). Cloudflare credentials are stored in an encrypted
+      production host vault and copied to a protected file on Hermes. Add
       `pan.bearworks.pl` separately only if the bare name will be served.
-      Store narrowly scoped DNS credentials securely on the host, not in Git.
 - [ ] Prepare automatic renewal and inspect the renewal path and certificate
       permissions. Wire up the Nginx deploy hook and exercise it once the
       private listener exists. NetBird's private DNS zone alone cannot satisfy

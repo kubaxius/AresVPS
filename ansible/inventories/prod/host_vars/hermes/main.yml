@@ -16,3 +16,11 @@ firewall_rules:
     protocol: tcp
     port: "22022"
     interface: wt0
+  - comment: private-https-over-netbird
+    rule: allow
+    direction: in
+    protocol: tcp
+    port: "443"
+    interface: wt0
+
+certificate_email: "jakub.niedzwiedz98@proton.me"

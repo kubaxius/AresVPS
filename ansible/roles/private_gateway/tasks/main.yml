@@ -1,0 +1,53 @@
+---
+- name: Permit Nginx to bind its private IP before NetBird assigns it
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_nonlocal_bind
+    value: "1"
+    state: present
+    sysctl_set: true
+    reload: true
+#  ip_nonlocal_bind is a host-wide kernel setting:
+#  it lets Nginx start before NetBird assigns 100.108.231.143.
+#  It does not change this vhost into a public listener,
+#  but the exact-IP listen, UFW rule, and NetBird policy remain
+#  essential. If nginx -t fails after enabling the symlink,
+#  do not reboot with invalid config; correct the template
+#  or remove the new symlink and rerun nginx -t.
+
+- name: Install Nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+
+- name: Disable Ubuntu's default Nginx site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload private gateway Nginx
+
+- name: Install private search vhost
+  ansible.builtin.template:
+    src: search.conf.j2
+    dest: /etc/nginx/sites-available/private-search.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload private gateway Nginx
+
+- name: Enable private search vhost
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/private-search.conf
+    dest: /etc/nginx/sites-enabled/private-search.conf
+    state: link
+  notify: Reload private gateway Nginx
+
+- name: Validate Nginx configuration before activation
+  ansible.builtin.command: nginx -t
+  changed_when: false
+
+- name: Enable and start Nginx
+  ansible.builtin.systemd_service:
+    name: nginx
+    enabled: true
+    state: started

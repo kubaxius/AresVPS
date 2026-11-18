@@ -1,0 +1,6 @@
+---
+- name: Configure private HTTPS gateway
+  hosts: private_gateways
+  become: true
+  roles:
+    - private_gateway
