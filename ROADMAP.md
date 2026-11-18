@@ -4,12 +4,14 @@ tags: ai_generated
 
 # Pantheon Systems roadmap
 
-Pantheon is the configuration for a growing private network of servers, not just
-a website deployment. Start with one Hetzner VPS (`hermes`) acting as a NetBird
-internet exit node and, later, hosting the public BearWorks website. Add a
-separate server for private Podman services after the first VPS is working.
-File hosting and backups come later. NetBird Cloud provides the control plane;
-this project does not need to host NetBird's management services.
+Pantheon configures a growing private network of servers, not just a website.
+Start with the Hetzner VPS (`hermes`) for NetBird-only administration. After a
+minimal safe Ansible bootstrap, prioritize a trusted certificate for
+`*.pan.bearworks.pl`, a NetBird-only HTTPS reverse proxy, and a small rootless
+Podman service on Hermes. Deploy the public BearWorks website after that. Keep
+private service URLs stable as backends move between Hermes, Deimos, and future
+hosts. File hosting and backups come later. NetBird Cloud provides the control
+plane; Hermes does not host its management services.
 
 Each phase should leave a useful, recoverable system. Later services are not
 prerequisites for the first VPS. Keep server configuration in Ansible and
@@ -24,72 +26,123 @@ automatically from GitHub Actions.
 - [x] BearWorks site definition and local VM configuration path
 
 These are implementation pieces, **not** proof of production readiness. The
-production inventory still has a placeholder address; its SSH keys and firewall
-policy need production-specific values. The Nginx site currently serves HTTP,
-and the production signed-release publishing path needs end-to-end testing.
-The full `ansible/site.yml` also attempts a site update on every apply, so use
-a separate, limited bootstrap path until a compatible signed release exists.
+production inventory, cloud-init, and host firewall rules have been prepared,
+but applying them to Hermes and testing private SSH and firewall behavior remain
+unverified. UFW was last reported inactive; no live firewall changes are
+assumed. The Nginx site currently serves HTTP, and the production signed-release
+publishing path needs end-to-end testing. The existing `ansible/site.yml`
+targets every host and attempts a website update on every apply: do not run it
+against Hermes until its work is split into targeted playbooks.
 
-## Phase 1 — First VPS: NetBird exit node and private administration
+## Ansible layout to build
 
-Goal: an independently useful, recoverable Hetzner VPS that provides internet
-egress to selected NetBird peers. Website deployment comes later.
+- [ ] Add `ansible/base.yml` for `base`, `access`, and `firewall` on managed
+      hosts. Keep public website and container setup out of the first apply.
+- [ ] Add `ansible/web.yml` with **separate plays and roles** for `private_gateways`
+      and `public_web`. The private gateway must work without a published
+      website release; do not couple proxy changes to `pantheon-srv update`.
+- [ ] Add `ansible/podman.yml` for `podman_hosts`. Define services separately
+      from the shared Podman host setup so a machine can host only selected pods.
+- [ ] Put hosts in capability groups as needed: Hermes may belong to all three,
+      while future machines may belong to only one. Keep per-host firewall rules
+      explicit; the current `firewall_rules` list is replaced, not merged, when
+      inventory overrides it. Keep an optional combined entry point only after
+      the individual playbooks are safe and independently testable.
 
-- [ ] Decide the initial Hetzner location, Ubuntu 24.04 x86-64 server size,
-      public IPv4/IPv6, backup option, and how the server will be rebuilt.
-- [ ] Prepare distinct production SSH keys and production cloud-init for the
-      `ansible` and `jbear` users; do not reuse local-VM keys or its QEMU setup.
-- [ ] Prepare a NetBird peer group, narrowly scoped administration policy, and
-      one-off, non-ephemeral setup key. Keep enrollment credentials out of Git,
-      cloud-init/user data, and the website release pipeline.
-- [ ] Create a Hetzner Cloud Firewall with outbound traffic permitted and only
-      temporary, key-only public SSH access for bootstrap. Record the recovery
-      procedure using Hetzner Console/Rescue if NetBird becomes unavailable.
+## Phase 1 — Minimum safe Hermes bootstrap
+
+Goal: a recoverable VPS administered over NetBird, with no public SSH or
+unnecessary routing between NetBird peers and the public interface.
+
 - [x] Provision Hermes and connect it to NetBird.
-- [ ] Verify access to both administrative accounts over NetBird and confirm
-      website DNS has not been changed for the VPS.
-- [ ] Set the production Ansible inventory to the VPS's NetBird address and
-      configure production SSH keys and host firewall rules. Apply only the
-      base/access/firewall bootstrap roles at this stage.
-- [ ] Test UFW alongside NetBird on the `wt0` interface. Permit private SSH
-      without exposing port 22 publicly; verify NetBird access policies still
-      restrict which peers can connect. Do not assume the local-VM SSH rule
-      (`192.168.122.0/24`) is suitable for production.
-- [ ] Remove the temporary public SSH rule **after** a new NetBird SSH session
-      and Ansible connection both work. Retest access after a reboot.
-- [x] Confirm a NetBird client reaches the Internet through Hermes as an exit node.
-- [ ] Verify exit-node access is limited to the intended group; check DNS,
-      IPv4/IPv6 behavior, masquerading, and routing after reboot. Check the
-      interactions between NetBird's routing rules and UFW's default
-      routed-traffic policy.
-- [ ] **Gate:** the VPS is usable as an exit node, is manageable privately,
-      exposes no public SSH, and can be recovered if NetBird fails.
+- [x] Prepare a production inventory using Hermes's NetBird IP and cloud-init
+      with separate administrative SSH public keys.
+- [ ] Confirm both administrative accounts and Ansible connect over NetBird;
+      restrict the peer-to-peer SSH policy to intended clients.
+- [ ] Verify Hetzner's public firewall has no inbound SSH rule. Document recovery
+      with Hetzner Console/Rescue for times when NetBird is unavailable.
+- [x] Remove the obsolete Internet-forwarding rule from Hermes's production
+      UFW variables. Keep private peer-to-peer access independent of routing.
+- [ ] Confirm Hermes no longer distributes an unwanted default route in the
+      NetBird dashboard; the repo cannot verify dashboard state.
+- [ ] Apply only `ansible/base.yml` to Hermes at this stage. Keep a working
+      NetBird SSH session and Hetzner recovery access while enabling UFW for
+      the first time. Test private SSH on `wt0`, deny unsolicited public traffic,
+      and verify access again from a new session and after reboot.
+- [ ] **Gate:** Hermes is manageable privately, has no public SSH or unintended
+      forwarded traffic, and has a documented recovery path. Proceed immediately
+      to private certificates and proxying; do not wait for full rebuild automation.
 
-## Phase 2 — Reproducible production deployment
+## Phase 2 — Trusted certificate for private service names
 
-Goal: recreate the first VPS and its network role without undocumented manual
-server changes. Manual Hetzner provisioning is acceptable initially; OpenTofu
-is an option if it materially improves repeatability.
+Goal: obtain a renewable, browser-trusted certificate for services that will
+never need public web listeners.
 
-- [ ] Document the Hetzner resources, IPs, firewall, enrollment, SSH key
-      recovery, inventory, and backup choices; keep credentials out of the repo.
-- [ ] Automate or document the NetBird client installation and safe enrollment
-      path. Keep its administration and exit-node policies separate from website
-      configuration.
-- [ ] Split first-boot configuration from full `ansible/site.yml`, so a missing
-      website release cannot block access and network setup.
-- [ ] Test a new-server bootstrap, repeat Ansible for idempotence, and verify
-      NetBird and SSH reconnect after reboot. Exercise the recovery procedure.
-- [ ] If adopting OpenTofu, pin the Hetzner provider, secure state and API
-      credentials, and review plans before applying; DNS provider automation
-      is not required for the first deployment.
-- [ ] **Gate:** the first VPS's exit-node and administration setup can be
-      reproduced safely before adding the public website.
+- [ ] Confirm which public DNS provider is authoritative for `bearworks.pl` and
+      how to automate DNS-01 TXT challenges. Do not publish private service
+      A/AAAA records or expose Hermes's private listener to validate the cert.
+- [ ] Obtain a certificate for `*.pan.bearworks.pl` using DNS-01; add
+      `pan.bearworks.pl` separately only if the bare name will be served.
+      Store narrowly scoped DNS credentials securely on the host, not in Git.
+- [ ] Prepare automatic renewal and inspect the renewal path and certificate
+      permissions. Wire up the Nginx deploy hook and exercise it once the
+      private listener exists. NetBird's private DNS zone alone cannot satisfy
+      public ACME validation.
+- [ ] **Gate:** the private certificate is issued on Hermes through DNS-01
+      without opening a public listener for private services.
 
-## Phase 3 — Public BearWorks website on the first VPS
+## Phase 3 — NetBird-only reverse proxy
 
-Goal: add one public static website to the existing exit node without making
-administrative or NetBird services public.
+Goal: keep `*.pan.bearworks.pl` URLs stable as services move between hosts.
+
+- [ ] Create a NetBird Custom DNS Zone for `pan.bearworks.pl` and distribute it
+      to intended peers. Point service names to Hermes's NetBird address; do not
+      publish private service A/AAAA records in public DNS.
+- [ ] Build the `private_gateway` role separately from website release tasks.
+      Bind its Nginx HTTPS listener to Hermes's NetBird address, not a wildcard
+      public listener. Plan for that address not existing when Nginx starts;
+      do not let private proxy startup take down the public website later.
+- [ ] Configure NetBird policies for clients to reach Hermes's private HTTPS
+      listener and for Hermes to reach approved backend hosts. Keep backend
+      services bound to loopback behind a private host proxy where appropriate.
+- [ ] Pilot `search.pan.bearworks.pl` by proxying from Hermes to the existing
+      SearXNG Apache vhost on Deimos over NetBird. Review host headers, HTTPS
+      forwarding, SearXNG's base URL, and rollback; keep the old name working
+      until the new one is verified.
+- [ ] Validate Nginx before reload; test certificate renewal and its deploy
+      hook. From another peer, verify DNS, TLS, search, and access policies.
+      From the public Internet, verify that private hostnames cannot reach a
+      private backend even with an explicit Host header and TLS SNI. Reboot and
+      test proxy readiness again.
+- [ ] **Gate:** the private URL works without exposing the backend publicly or
+      depending on which machine currently hosts the container.
+
+## Phase 4 — First rootless Podman service on Hermes
+
+Goal: move SearXNG behind the same private URL before deploying the public site.
+
+- [ ] Check Hermes's CPU, RAM, disk, bandwidth, and backup capacity. Add a
+      `podman_hosts` role for the rootless Podman and systemd/Quadlet foundation;
+      keep individual services selectable per host.
+- [ ] Back up SearXNG's config and secret separately from its disposable cache.
+      Start a Hermes instance on a loopback-only port with a supervised service
+      and a documented secret/state location. Do not expose the container port.
+- [ ] Switch only Hermes's proxy upstream from Deimos to localhost; keep
+      `search.pan.bearworks.pl` and its certificate unchanged. Preserve the old
+      Deimos service until searches, private access, rollback, and reboot
+      recovery work on Hermes.
+- [ ] Check resource usage and confirm the container is not reachable through
+      Hermes's public interface. Do not move OpenClaw until its authentication,
+      state backups, proxy headers, WebSockets, and host risk have been reviewed.
+- [ ] Keep source definitions and secrets in their appropriate repositories;
+      `~/services` is a separate repo, and its ignored live data is not a backup.
+- [ ] **Gate:** Hermes serves a private Podman workload through the stable
+      HTTPS proxy without interfering with private administration.
+
+## Phase 5 — Public BearWorks website on Hermes
+
+Goal: serve `bearworks.pl` and `www.bearworks.pl` publicly without exposing
+private apps or administrative services.
 
 - [ ] Confirm the separate Astro website repository reproducibly builds the
       required Polish and English static pages and publishes compatible signed
@@ -99,38 +152,45 @@ administrative or NetBird services public.
 - [ ] Finish the BearWorks Nginx vhost: directory routes and real 404s,
       appropriate asset caching and headers, apex/`www` redirects, and
       configuration validation before reload.
-- [ ] Open public TCP 80/443 in both the Hetzner Cloud Firewall and UFW.
-      Configure trusted HTTPS for the apex and `www`, automatic renewal, and
-      HTTP-to-HTTPS redirects. Leave public SSH closed.
+- [ ] Open public TCP 80/443 in both the Hetzner Cloud Firewall and UFW, only
+      for the website. Configure separate trusted HTTPS for the apex and `www`,
+      automatic renewal, and HTTP-to-HTTPS redirects. Leave public SSH closed.
 - [ ] Test the site by public IP/explicit hostname before DNS migration.
       Record current DNS and rollback steps, then switch A/AAAA and `www`.
-- [ ] Verify the website externally over IPv4/IPv6, the exit node and private
-      SSH from NetBird, release rollback, certificate renewal, and reboot
-      recovery. Do not make release updates depend on NetBird availability.
-- [ ] **Gate:** the VPS has exactly two intended workloads: NetBird exit node
-      and public static website. No Astro/Node runtime or other public app
-      ports are required on the server.
+- [ ] Verify the website externally over IPv4/IPv6, private HTTPS and SSH over
+      NetBird, release rollback, certificate renewal, and reboot recovery.
+      Public website availability must not depend on NetBird being connected.
+- [ ] **Gate:** the public website works without exposing the private gateway,
+      and no Astro/Node runtime is required for the static site.
 
-## Phase 4 — Second server: private Podman hosting
+## Phase 6 — Reproducibility, more hosts, and movable services
 
-Goal: add another Ansible-managed host for private services, without turning
-the first VPS into a general-purpose application host.
+Goal: reproduce Hermes's working configuration and add hosts without changing
+client-facing URLs or certificates. Do not hold up the private proxy pilot for
+infrastructure automation beyond its safe minimum bootstrap.
 
+- [ ] Document Hetzner resources, IPs, firewall, NetBird enrollment, key
+      recovery, inventory, and backup choices; keep credentials out of Git.
+- [ ] Repeat Ansible runs for idempotence, test a clean-server bootstrap,
+      verify NetBird and SSH after reboot, and exercise the recovery procedure.
+- [ ] If adopting OpenTofu, pin the Hetzner provider, secure state and API
+      credentials, and review plans before applying. Manual provisioning is
+      acceptable initially; DNS provider automation outside DNS-01 is optional.
 - [ ] Choose where the second server runs, what resources it needs, and how it
       is reached and recovered over NetBird.
 - [ ] Extend inventories and host/group variables so shared base/access rules
-      are reusable while website, exit-node, and Podman roles target only the
+      are reusable while website, gateway, and Podman roles target only the
       appropriate hosts.
 - [ ] Establish a Podman image/service pattern: approved image sources and
       versions, least-privilege users, volumes, systemd/Quadlet startup,
       health checks, logging, upgrades, and rollback.
-- [ ] Bind private services only to appropriate private interfaces or
-      localhost behind a NetBird-accessible proxy; verify they cannot be
-      reached from the public internet.
+- [ ] Keep remote backends behind NetBird-only listeners; on moving a service,
+      change its Hermes proxy upstream and peer policy, not its client-facing
+      DNS record or certificate.
 - [ ] Rebuild and reboot the second host to verify services recover without
-      disrupting the website or exit node.
+      disrupting the website or private gateway.
 
-## Phase 5 — File hosting, backups, and further hosts
+## Phase 7 — File hosting, backups, and further hosts
 
 - [ ] Define file access, capacity, privacy, and persistence requirements
       before selecting a file-hosting service or adding it to Podman.
@@ -144,7 +204,7 @@ the first VPS into a general-purpose application host.
 
 ## Not on the critical path
 
-Do not delay the first VPS for a CMS, contact-form backend, analytics, private
-file hosting, Podman, automated DNS management, or CI-driven infrastructure
-applies. This plan replaces the previous Tailscale and Docker Compose work with
-NetBird and a later Podman-based private-service host.
+Do not delay the initial private gateway or website for a CMS, contact-form
+backend, analytics, file hosting, OpenClaw migration, a second server, or
+CI-driven infrastructure applies. DNS-01 automation is needed for trusted
+private HTTPS; fully automating the rest of public DNS is optional.

@@ -8,7 +8,7 @@ Pantheon is a learning-focused infrastructure project for building a reproducibl
 
 ### Current Focus
 
-Configure Hermes as a NetBird exit node, then host the public website on it. Add separate Ansible-managed hosts for future private services.
+Configure Hermes for NetBird-only administration and private HTTPS proxying, then host the public BearWorks website and a few small rootless Podman services. Add separate Ansible-managed hosts as the private network grows.
 
 ### AI Usage
 
@@ -22,7 +22,7 @@ Existing `ai_generated` comments and Markdown tags are legacy AI markers and rem
 
 ### Hermes VPS
 
-Hermes is the first VPS: a NetBird exit node and, later, the public website host. Private services belong on additional hosts.
+Hermes is the first VPS: a private NetBird-accessible reverse proxy, public website host, and potential host for small private services. Additional hosts can run backends without changing their client-facing URLs.
 
 ## Assumptions
 
